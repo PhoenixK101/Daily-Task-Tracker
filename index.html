@@ -38,7 +38,19 @@
     .spotlight-ring {
       animation: spotlightPulse 1.4s ease-in-out 2;
     }
-  </style>
+  <style>
+  /* ...your existing styles stay above this... */
+
+  @media (max-width: 600px) {
+    body {
+      padding: 10px;
+    }
+    button {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+  }
+</style>
 </head>
 <body id="page-body" class="min-h-screen bg-slate-100 text-slate-900 flex items-center justify-center p-4 sm:p-6 transition-colors duration-500">
   <main id="app-card" class="w-full max-w-xl bg-white rounded-3xl shadow-xl border border-slate-200/80 p-5 sm:p-7 transition-colors duration-300">
