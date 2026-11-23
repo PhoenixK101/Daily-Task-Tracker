@@ -23,3 +23,16 @@
     }
   ]
 }
+
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.phoenixk101.twa",
+      "sha256_cert_fingerprints": [
+        "YOUR_SHA256_FINGERPRINT_HERE"
+      ]
+    }
+  }
+]
