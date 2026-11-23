@@ -59,13 +59,15 @@
     #app-card select {
       padding: 4px 6px !important;
     }
-    #app-card [class*="truncate"] {
-      white-space: normal !important;
-      overflow: visible !important;
-      text-overflow: clip !important;
-      word-break: break-word !important;
-    }
-  }
+    #app-card li *,
+#app-card [id*="task"] *,
+#app-card [class*="task"] *,
+#app-card [class*="truncate"] {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  word-break: break-word !important;
+}
 </style>
 </head>
 <body id="page-body" class="min-h-screen bg-slate-100 text-slate-900 flex items-center justify-center p-4 sm:p-6 transition-colors duration-500">
