@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.phoenixk101.twa",
+      "sha256_cert_fingerprints": [
+        "3F:54:93:7B:4C:50:8F:04:08:10:3B:5D:D8:94:E9:DE:65:F6:4D:0D:B2:92:5B:E3:AA:FC:A0:15:CF:22:2F:BD"
+      ]
+    }
+  }
+]
