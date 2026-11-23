@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Task Tracker</title>
+  <meta name="theme-color" content="#4f46e5" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" href="./icon-192.png" />
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+    @keyframes popIn {
+      0% { opacity: 0; transform: translateY(6px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes checkBounce {
+      0% { transform: scale(0.85); }
+      55% { transform: scale(1.14); }
+      100% { transform: scale(1); }
+    }
+    @keyframes spotlightPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.35); }
+      50% { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0); }
+    }
+    .animate-pop {
+      animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .animate-check {
+      animation: checkBounce 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .spotlight-ring {
+      animation: spotlightPulse 1.4s ease-in-out 2;
+    }
+  </style>
+</head>
+<body id="page-body" class="min-h-screen bg-slate-100 text-slate-900 flex items-center justify-center p-4 sm:p-6 transition-colors duration-500">
+  <main id="app-card" class="w-full max-w-xl bg-white rounded-3xl shadow-xl border border-slate-200/80 p-5 sm:p-7 transition-colors duration-300">
+    <!-- Top Bar: Streak, 3 Color Modes, Date -->
+    <header class="mb-5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span id="streak-badge" class="text-xs font-bold text-amber-800 bg-amber-100 border border-amber-300/80 px-3 py-1 rounded-full">
+            0-day streak
+          </span>
+          <!-- 3 Theme Dots: 1. Bright, 2. Eye Care, 3. Dynamic Black -->
+          <div id="theme-switcher" class="flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-full border border-slate-200" role="group" aria-label="Color theme"></div>
+        </div>
+        <span id="today-date" class="text-xs text-slate-500 font-medium"></span>
+      </div>
+
+      <div class="flex items-end justify-between gap-3 mt-3.5">
+        <div>
+          <h1 id="greeting-title" class="text-2xl font-extrabold tracking-tight text-slate-900">Task Tracker</h1>
+          <p id="subtitle-text" class="text-sm text-slate-500 mt-0.5">Pick your mode, organize by category, and keep your streak alive.</p>
+        </div>
+        <button
+          id="pick-for-me-btn"
+          type="button"
+          class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white shadow-sm shrink-0 transition-all hover:-translate-y-0.5 active:translate-y-0"
+          title="Step through your tasks in sequence or pick a quick common win"
+        >
+          Pick for me
+        </button>
+      </div>
+    </header>
+
+    <!-- Progress Section -->
+    <section id="progress-card" class="mb-4 rounded-2xl p-4 bg-slate-50 border border-slate-200/80 transition-colors" aria-label="Daily progress">
+      <div class="flex items-center justify-between text-sm mb-2">
+        <span id="progress-label" class="font-bold text-slate-800">0% done</span>
+        <span id="progress-text" class="font-semibold text-indigo-700">0 of 3 completed</span>
+      </div>
+      <div id="progress-track" class="w-full h-3 bg-slate-200/80 rounded-full overflow-hidden p-0.5">
+        <div
+          id="progress-bar"
+          class="h-full rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-indigo-500 via-violet-500 to-emerald-500"
+          style="width: 0%"
+        ></div>
+      </div>
+    </section>
+
+    <!-- Sequential Pick-For-Me Spotlight Card -->
+    <section
+      id="spotlight-card"
+      class="hidden mb-4 rounded-2xl p-4 border animate-pop"
+      aria-label="Picked task focus mode"
+    >
+      <div class="flex flex-wrap items-start justify-between gap-2 mb-2.5">
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span id="spotlight-step-badge" class="text-[11px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">
+              Next in Sequence
+            </span>
+            <span id="spotlight-cat" class="text-[11px] font-semibold px-2 py-0.5 rounded-md border"></span>
+          </div>
+          <p id="spotlight-task-name" class="text-sm font-bold truncate"></p>
+          <p id="spotlight-tip" class="text-xs mt-0.5"></p>
+        </div>
+        <button
+          id="spotlight-close-btn"
+          type="button"
+          class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-black/5 flex items-center justify-center text-base leading-none shrink-0"
+          aria-label="Close focus card"
+        >
+          ×
+        </button>
+      </div>
+
+      <div id="spotlight-controls" class="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t">
+        <div class="flex items-center gap-2">
+          <span id="focus-timer-display" class="text-sm font-mono font-bold px-2.5 py-1 rounded-lg border">
+            10:00
+          </span>
+          <button
+            id="focus-timer-toggle"
+            type="button"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+          >
+            Start 10m
+          </button>
+          <button
+            id="focus-timer-reset"
+            type="button"
+            class="px-2 py-1 rounded-lg text-xs font-medium transition-colors"
+          >
+            Reset
+          </button>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button
+            id="spotlight-next-btn"
+            type="button"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors"
+          >
+            Next in list →
+          </button>
+          <button
+            id="spotlight-done-btn"
+            type="button"
+            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+          >
+            Mark done ✓
+          </button>
+        </div>
+      </div>
+
+      <!-- Common Quick Wins (besides the user's task list) -->
+      <div id="common-wins-wrap" class="mt-3 pt-2.5 border-t">
+        <p id="common-wins-label" class="text-[11px] font-semibold uppercase tracking-wider mb-1.5">
+          Or add a quick common win
+        </p>
+        <div id="common-wins-list" class="flex flex-wrap gap-1.5"></div>
+      </div>
+    </section>
+
+    <!-- Sequential Completion Banner -->
+    <section
+      id="message-box"
+      class="mb-5 rounded-2xl px-4 py-3 border transition-all"
+      aria-live="polite"
+    >
+      <p id="message-text" class="text-sm font-semibold leading-snug">
+        Lock in your first task—small wins set the tone for the whole day.
+      </p>
+    </section>
+
+    <!-- Add Task Form -->
+    <form id="add-task-form" class="flex flex-col sm:flex-row gap-2 mb-4">
+      <label for="task-input" class="sr-only">New task name</label>
+      <input
+        id="task-input"
+        type="text"
+        placeholder="What's on your list today?"
+        maxlength="80"
+        class="flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border transition-all focus:outline-none"
+      />
+      <div class="flex gap-2">
+        <label for="category-select" class="sr-only">Category</label>
+        <select
+          id="category-select"
+          class="px-3 py-2.5 text-sm font-semibold rounded-xl border transition-all focus:outline-none"
+        ></select>
+        <button
+          id="add-btn"
+          type="submit"
+          class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold shrink-0 shadow-sm transition-all"
+        >
+          Add
+        </button>
+      </div>
+    </form>
+
+    <!-- Dynamic Category Filter Tabs -->
+    <nav id="filter-bar" class="flex flex-wrap items-center gap-1.5 mb-4" aria-label="Filter tasks by category"></nav>
+
+    <!-- Task List -->
+    <section aria-label="Task list">
+      <ul id="task-list" class="space-y-2.5"></ul>
+    </section>
+
+    <!-- Footer Controls -->
+    <footer id="app-footer" class="mt-6 pt-4 border-t flex flex-wrap items-center justify-between gap-2">
+      <p id="remaining-text" class="text-xs font-semibold">3 tasks left today</p>
+      <div class="flex items-center gap-1.5">
+        <button
+          id="clear-completed-btn"
+          type="button"
+          class="text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+        >
+          Clear completed
+        </button>
+        <button
+          id="reset-btn"
+          type="button"
+          class="text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+        >
+          Reset day
+        </button>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "daily_task_tracker_v5";
+
+    // Exactly 3 color modes: 1. White/Bright, 2. Eye Care, 3. Dynamic Black
+    const THEMES = {
+      bright: {
+        name: "White / Bright",
+        dot: "bg-white border-2 border-slate-300",
+        body: "bg-gradient-to-br from-slate-100 via-white to-indigo-50 text-slate-900",
+        card: "bg-white border-slate-200/90",
+        bar: "bg-gradient-to-r from-indigo-500 via-violet-500 to-emerald-500",
+        mode: "bright"
+      },
+      eyecare: {
+        name: "Eye Care",
+        dot: "bg-[#f3e7cf] border-2 border-[#c8b288]",
+        body: "bg-[#f4ecdc] text-[#3d3528]",
+        card: "bg-[#fbf6ec] border-[#e4d7be]",
+        bar: "bg-gradient-to-r from-[#5a8f69] to-[#87a96b]",
+        mode: "eyecare"
+      },
+      black: {
+        name: "Dynamic Black",
+        dot: "bg-gradient-to-br from-black via-zinc-800 to-violet-600 border border-zinc-600",
+        body: "bg-gradient-to-br from-black via-zinc-950 to-indigo-950/60 text-zinc-100",
+        card: "bg-zinc-950/95 border-zinc-800",
+        bar: "bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-400",
+        mode: "black"
+      }
+    };
+
+    const CATEGORY_LIST = [
+      { name: "Work", accent: "border-l-blue-500", badge: "bg-blue-50 text-blue-700 border-blue-200", pillActive: "bg-blue-600 text-white" },
+      { name: "Study", accent: "border-l-indigo-500", badge: "bg-indigo-50 text-indigo-700 border-indigo-200", pillActive: "bg-indigo-600 text-white" },
+      { name: "Fitness", accent: "border-l-emerald-500", badge: "bg-emerald-50 text-emerald-700 border-emerald-200", pillActive: "bg-emerald-600 text-white" },
+      { name: "Creative", accent: "border-l-pink-500", badge: "bg-pink-50 text-pink-700 border-pink-200", pillActive: "bg-pink-600 text-white" },
+      { name: "Finance", accent: "border-l-amber-500", badge: "bg-amber-50 text-amber-700 border-amber-200", pillActive: "bg-amber-600 text-white" },
+      { name: "Social", accent: "border-l-cyan-500", badge: "bg-cyan-50 text-cyan-700 border-cyan-200", pillActive: "bg-cyan-600 text-white" },
+      { name: "Personal", accent: "border-l-violet-500", badge: "bg-violet-50 text-violet-700 border-violet-200", pillActive: "bg-violet-600 text-white" }
+    ];
+
+    const CATEGORY_MAP = Object.fromEntries(CATEGORY_LIST.map((c) => [c.name, c]));
+
+    const SEQUENCE_LINES = [
+      "First task locked in—starting is half the battle.",
+      "Two down—you've got real momentum now.",
+      "Three in a row—staying locked in is paying off.",
+      "Keep that flow going—you're making solid progress.",
+      "Halfway or cruising—consistency always wins.",
+      "Another one checked off—your future self appreciates this.",
+      "Clean execution—keep stacking these wins.",
+      "Almost there—finish strong and protect your peace.",
+      "One step closer to clearing the board today.",
+      "Unstoppable energy—you're owning your schedule today."
+    ];
+
+    const PICK_TIPS = [
+      "Give this 10 focused minutes—starting is the hardest part.",
+      "Step-by-step beats multitasking—finish this one next.",
+      "Put distractions aside and knock out this item in sequence.",
+      "Stay in order and keep your momentum rolling."
+    ];
+
+    // Common everyday quick wins besides the user's list
+    const COMMON_QUICK_WINS = [
+      { name: "Drink a full glass of water", category: "Fitness" },
+      { name: "2-min desk or room tidy", category: "Personal" },
+      { name: "Stretch neck & shoulders", category: "Fitness" },
+      { name: "Reply to 1 pending message", category: "Social" },
+      { name: "Review tomorrow's top priority", category: "Work" },
+      { name: "Log today's expenses", category: "Finance" }
+    ];
+
+    const DEFAULT_TASKS = [
+      { id: 1, name: "Plan top 3 priorities", category: "Work", done: false },
+      { id: 2, name: "20-min workout, walk, or stretch", category: "Fitness", done: false },
+      { id: 3, name: "Check budget or save a receipt", category: "Finance", done: false }
+    ];
+
+    function normalizeCategory(cat) {
+      if (cat === "Wellness") return "Fitness";
+      return CATEGORY_MAP[cat] ? cat : "Personal";
+    }
+
+    function normalizeTheme(themeKey) {
+      if (THEMES[themeKey]) return themeKey;
+      if (themeKey === "midnight") return "black";
+      return "bright";
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({
+            tasks,
+            nextId,
+            streak,
+            lastCompletedDate,
+            lastActiveDate,
+            activeFilter,
+            activeTheme
+          })
+        );
+      } catch {
+        // Ignore storage errors if blocked
+      }
+    }
+
+    function getTodayKey() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    }
+
+    // 1. Initialize state
+    const todayKey = getTodayKey();
+    const saved = loadState();
+    let tasks = Array.isArray(saved?.tasks)
+      ? saved.tasks.map((t) => ({
+          id: t.id,
+          name: String(t.name || ""),
+          category: normalizeCategory(t.category),
+          done: Boolean(t.done)
+        }))
+      : DEFAULT_TASKS.map((t) => ({ ...t }));
+    let nextId = typeof saved?.nextId === "number" ? saved.nextId : 4;
+    let streak = typeof saved?.streak === "number" ? saved.streak : 0;
+    let lastCompletedDate = typeof saved?.lastCompletedDate === "string" ? saved.lastCompletedDate : "";
+    let lastActiveDate = typeof saved?.lastActiveDate === "string" ? saved.lastActiveDate : todayKey;
+    let activeFilter =
+      saved?.activeFilter === "All"
+        ? "All"
+        : saved?.activeFilter === "Wellness"
+          ? "Fitness"
+          : CATEGORY_MAP[saved?.activeFilter]
+            ? saved.activeFilter
+            : "All";
+    let activeTheme = normalizeTheme(saved?.activeTheme);
+    let editingId = null;
+    let spotlightOpen = false;
+    let spotlightId = null;
+    let spotlightTip = PICK_TIPS[0];
+    let justCheckedId = null;
+
+    // Focus timer state (10 minutes = 600 seconds)
+    let timerSeconds = 600;
+    let timerInterval = null;
+
+    if (lastActiveDate !== todayKey) {
+      tasks.forEach((t) => {
+        t.done = false;
+      });
+      lastActiveDate = todayKey;
+    }
+
+    // 2. Grab HTML elements
+    const pageBodyEl = document.getElementById("page-body");
+    const appCardEl = document.getElementById("app-card");
+    const themeSwitcherEl = document.getElementById("theme-switcher");
+    const greetingTitleEl = document.getElementById("greeting-title");
+    const subtitleTextEl = document.getElementById("subtitle-text");
+    const todayDateEl = document.getElementById("today-date");
+    const streakBadgeEl = document.getElementById("streak-badge");
+    const pickForMeBtn = document.getElementById("pick-for-me-btn");
+    const progressCardEl = document.getElementById("progress-card");
+    const progressLabelEl = document.getElementById("progress-label");
+    const progressTextEl = document.getElementById("progress-text");
+    const progressTrackEl = document.getElementById("progress-track");
+    const progressBarEl = document.getElementById("progress-bar");
+    const spotlightCardEl = document.getElementById("spotlight-card");
+    const spotlightStepBadgeEl = document.getElementById("spotlight-step-badge");
+    const spotlightCatEl = document.getElementById("spotlight-cat");
+    const spotlightTaskNameEl = document.getElementById("spotlight-task-name");
+    const spotlightTipEl = document.getElementById("spotlight-tip");
+    const spotlightCloseBtn = document.getElementById("spotlight-close-btn");
+    const spotlightControlsEl = document.getElementById("spotlight-controls");
+    const spotlightNextBtn = document.getElementById("spotlight-next-btn");
+    const spotlightDoneBtn = document.getElementById("spotlight-done-btn");
+    const focusTimerDisplayEl = document.getElementById("focus-timer-display");
+    const focusTimerToggleBtn = document.getElementById("focus-timer-toggle");
+    const focusTimerResetBtn = document.getElementById("focus-timer-reset");
+    const commonWinsWrapEl = document.getElementById("common-wins-wrap");
+    const commonWinsLabelEl = document.getElementById("common-wins-label");
+    const commonWinsListEl = document.getElementById("common-wins-list");
+    const messageBoxEl = document.getElementById("message-box");
+    const messageTextEl = document.getElementById("message-text");
+    const addTaskForm = document.getElementById("add-task-form");
+    const taskInput = document.getElementById("task-input");
+    const categorySelect = document.getElementById("category-select");
+    const filterBarEl = document.getElementById("filter-bar");
+    const taskListEl = document.getElementById("task-list");
+    const appFooterEl = document.getElementById("app-footer");
+    const remainingTextEl = document.getElementById("remaining-text");
+    const clearCompletedBtn = document.getElementById("clear-completed-btn");
+    const resetBtn = document.getElementById("reset-btn");
+
+    // Populate category dropdown dynamically
+    CATEGORY_LIST.forEach((cat) => {
+      const opt = document.createElement("option");
+      opt.value = cat.name;
+      opt.textContent = cat.name;
+      categorySelect.appendChild(opt);
+    });
+
+    function formatTimer(secs) {
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    function stopFocusTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      focusTimerToggleBtn.textContent = timerSeconds === 600 ? "Start 10m" : "Resume";
+    }
+
+    function resetFocusTimer() {
+      stopFocusTimer();
+      timerSeconds = 600;
+      focusTimerDisplayEl.textContent = formatTimer(timerSeconds);
+      focusTimerToggleBtn.textContent = "Start 10m";
+    }
+
+    function applyTheme() {
+      const t = THEMES[activeTheme];
+      const mode = t.mode;
+      pageBodyEl.className = `min-h-screen flex items-center justify-center p-4 sm:p-6 transition-colors duration-500 ${t.body}`;
+      appCardEl.className = `w-full max-w-xl rounded-3xl shadow-xl border p-5 sm:p-7 transition-colors duration-300 ${t.card}`;
+      progressBarEl.className = `h-full rounded-full transition-all duration-500 ease-out ${t.bar}`;
+
+      if (mode === "black") {
+        greetingTitleEl.className = "text-2xl font-extrabold tracking-tight text-white";
+        subtitleTextEl.className = "text-sm text-zinc-400 mt-0.5";
+        todayDateEl.className = "text-xs text-zinc-400 font-medium";
+        progressCardEl.className = "mb-4 rounded-2xl p-4 bg-zinc-900 border border-zinc-800 transition-colors";
+        progressLabelEl.className = "font-bold text-zinc-100";
+        progressTextEl.className = "font-semibold text-violet-400";
+        progressTrackEl.className = "w-full h-3 bg-zinc-800 rounded-full overflow-hidden p-0.5";
+        spotlightCardEl.className = `${spotlightOpen ? "" : "hidden "}mb-4 rounded-2xl p-4 bg-zinc-900 border border-violet-500/40 animate-pop`;
+        spotlightTaskNameEl.className = "text-sm font-bold text-white truncate";
+        spotlightTipEl.className = "text-xs text-zinc-400 mt-0.5";
+        spotlightControlsEl.className = "flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-zinc-800";
+        focusTimerDisplayEl.className = "text-sm font-mono font-bold text-violet-300 bg-black px-2.5 py-1 rounded-lg border border-zinc-800";
+        focusTimerResetBtn.className = "px-2 py-1 rounded-lg text-xs font-medium text-zinc-400 hover:bg-zinc-800 transition-colors";
+        spotlightNextBtn.className = "px-2.5 py-1 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors";
+        commonWinsWrapEl.className = "mt-3 pt-2.5 border-t border-zinc-800";
+        commonWinsLabelEl.className = "text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5";
+        messageBoxEl.className = "mb-5 rounded-2xl px-4 py-3 bg-violet-500/10 border border-violet-500/30 transition-all";
+        messageTextEl.className = "text-sm font-semibold leading-snug text-violet-100";
+        taskInput.className = "flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-zinc-800 bg-zinc-900 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-400 transition-all";
+        categorySelect.className = "px-3 py-2.5 text-sm font-semibold text-zinc-100 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition-all";
+        appFooterEl.className = "mt-6 pt-4 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-2";
+        remainingTextEl.className = "text-xs font-semibold text-zinc-400";
+        themeSwitcherEl.className = "flex items-center gap-1.5 bg-zinc-900 px-2 py-1 rounded-full border border-zinc-800";
+      } else if (mode === "eyecare") {
+        greetingTitleEl.className = "text-2xl font-extrabold tracking-tight text-[#2f281d]";
+        subtitleTextEl.className = "text-sm text-[#6e624e] mt-0.5";
+        todayDateEl.className = "text-xs text-[#6e624e] font-medium";
+        progressCardEl.className = "mb-4 rounded-2xl p-4 bg-[#f3ead8] border border-[#dfd1b4] transition-colors";
+        progressLabelEl.className = "font-bold text-[#3d3528]";
+        progressTextEl.className = "font-semibold text-[#476f53]";
+        progressTrackEl.className = "w-full h-3 bg-[#e4d7be] rounded-full overflow-hidden p-0.5";
+        spotlightCardEl.className = `${spotlightOpen ? "" : "hidden "}mb-4 rounded-2xl p-4 bg-[#f5eddc] border border-[#d6c4a0] animate-pop`;
+        spotlightTaskNameEl.className = "text-sm font-bold text-[#2f281d] truncate";
+        spotlightTipEl.className = "text-xs text-[#6e624e] mt-0.5";
+        spotlightControlsEl.className = "flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-[#e2d4b8]";
+        focusTimerDisplayEl.className = "text-sm font-mono font-bold text-[#3d3528] bg-[#fbf6ec] px-2.5 py-1 rounded-lg border border-[#dfd1b4]";
+        focusTimerResetBtn.className = "px-2 py-1 rounded-lg text-xs font-medium text-[#6e624e] hover:bg-[#eadec5] transition-colors";
+        spotlightNextBtn.className = "px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#fbf6ec] hover:bg-[#f0e4cd] text-[#3d3528] border border-[#d6c4a0] transition-colors";
+        commonWinsWrapEl.className = "mt-3 pt-2.5 border-t border-[#e2d4b8]";
+        commonWinsLabelEl.className = "text-[11px] font-semibold uppercase tracking-wider text-[#6e624e] mb-1.5";
+        messageBoxEl.className = "mb-5 rounded-2xl px-4 py-3 bg-[#eef4eb] border border-[#c7d9c1] transition-all";
+        messageTextEl.className = "text-sm font-semibold leading-snug text-[#2e4a36]";
+        taskInput.className = "flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-[#dfd1b4] bg-[#fffcf5] text-[#2f281d] placeholder:text-[#9c8e76] focus:outline-none focus:ring-2 focus:ring-[#5a8f69]/30 focus:border-[#5a8f69] transition-all";
+        categorySelect.className = "px-3 py-2.5 text-sm font-semibold text-[#3d3528] rounded-xl border border-[#dfd1b4] bg-[#f3ead8] hover:bg-[#eadec5] focus:outline-none focus:ring-2 focus:ring-[#5a8f69]/30 transition-all";
+        appFooterEl.className = "mt-6 pt-4 border-t border-[#e4d7be] flex flex-wrap items-center justify-between gap-2";
+        remainingTextEl.className = "text-xs font-semibold text-[#6e624e]";
+        themeSwitcherEl.className = "flex items-center gap-1.5 bg-[#f3ead8] px-2 py-1 rounded-full border border-[#dfd1b4]";
+      } else {
+        greetingTitleEl.className = "text-2xl font-extrabold tracking-tight text-slate-900";
+        subtitleTextEl.className = "text-sm text-slate-500 mt-0.5";
+        todayDateEl.className = "text-xs text-slate-500 font-medium";
+        progressCardEl.className = "mb-4 rounded-2xl p-4 bg-slate-50 border border-slate-200/80 transition-colors";
+        progressLabelEl.className = "font-bold text-slate-800";
+        progressTextEl.className = "font-semibold text-indigo-700";
+        progressTrackEl.className = "w-full h-3 bg-slate-200/80 rounded-full overflow-hidden p-0.5";
+        spotlightCardEl.className = `${spotlightOpen ? "" : "hidden "}mb-4 rounded-2xl p-4 bg-indigo-50/70 border border-indigo-200 animate-pop`;
+        spotlightTaskNameEl.className = "text-sm font-bold text-slate-900 truncate";
+        spotlightTipEl.className = "text-xs text-slate-600 mt-0.5";
+        spotlightControlsEl.className = "flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-indigo-200/60";
+        focusTimerDisplayEl.className = "text-sm font-mono font-bold text-indigo-800 bg-white px-2.5 py-1 rounded-lg border border-indigo-200/70";
+        focusTimerResetBtn.className = "px-2 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-white/70 transition-colors";
+        spotlightNextBtn.className = "px-2.5 py-1 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-colors";
+        commonWinsWrapEl.className = "mt-3 pt-2.5 border-t border-indigo-200/60";
+        commonWinsLabelEl.className = "text-[11px] font-semibold uppercase tracking-wider text-indigo-700/80 mb-1.5";
+        messageBoxEl.className = "mb-5 rounded-2xl px-4 py-3 bg-indigo-50/70 border border-indigo-200/80 transition-all";
+        messageTextEl.className = "text-sm font-semibold leading-snug text-indigo-950";
+        taskInput.className = "flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all";
+        categorySelect.className = "px-3 py-2.5 text-sm font-semibold text-slate-700 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all";
+        appFooterEl.className = "mt-6 pt-4 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2";
+        remainingTextEl.className = "text-xs font-semibold text-slate-500";
+        themeSwitcherEl.className = "flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-full border border-slate-200";
+      }
+
+      // Render 3 theme dots on the right side of streak
+      themeSwitcherEl.innerHTML = "";
+      Object.entries(THEMES).forEach(([key, theme]) => {
+        const dot = document.createElement("button");
+        dot.type = "button";
+        const selected = activeTheme === key;
+        dot.className = selected
+          ? `w-4 h-4 rounded-full ${theme.dot} ring-2 ring-offset-1 ring-indigo-500 scale-110 transition-transform`
+          : `w-4 h-4 rounded-full ${theme.dot} opacity-75 hover:opacity-100 hover:scale-110 transition-all`;
+        dot.title = theme.name;
+        dot.setAttribute("aria-label", `Switch to ${theme.name} theme`);
+        dot.addEventListener("click", () => {
+          activeTheme = key;
+          saveState();
+          render();
+        });
+        themeSwitcherEl.appendChild(dot);
+      });
+    }
+
+    function updateDynamicClock() {
+      const now = new Date();
+      const hour = now.getHours();
+      let greeting = "Good evening";
+      if (hour < 12) greeting = "Good morning";
+      else if (hour < 17) greeting = "Good afternoon";
+
+      greetingTitleEl.textContent = `${greeting} · Task Tracker`;
+      todayDateEl.textContent = now.toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+
+    function showSequenceMessage(taskIndex) {
+      const line = SEQUENCE_LINES[taskIndex % SEQUENCE_LINES.length];
+      messageTextEl.textContent = line;
+      messageBoxEl.classList.remove("animate-pop");
+      void messageBoxEl.offsetWidth;
+      messageBoxEl.classList.add("animate-pop");
+    }
+
+    function miniBurst() {
+      if (typeof confetti === "function") {
+        confetti({
+          particleCount: 18,
+          spread: 45,
+          startVelocity: 22,
+          origin: { y: 0.65 }
+        });
+      }
+    }
+
+    function celebrateAllDone() {
+      if (typeof confetti === "function") {
+        confetti({
+          particleCount: 85,
+          spread: 75,
+          origin: { y: 0.65 }
+        });
+      }
+    }
+
+    function updateStreakIfAllDone() {
+      const allDone = tasks.length > 0 && tasks.every((t) => t.done);
+      const currentKey = getTodayKey();
+      if (allDone && lastCompletedDate !== currentKey) {
+        streak += 1;
+        lastCompletedDate = currentKey;
+      }
+    }
+
+    function pickNextInSequence(advanceFromCurrent) {
+      const pending = tasks.filter((t) => !t.done);
+      spotlightOpen = true;
+      if (pending.length === 0) {
+        spotlightId = null;
+        resetFocusTimer();
+        render();
+        return;
+      }
+
+      if (!advanceFromCurrent || spotlightId === null) {
+        spotlightId = pending[0].id;
+      } else {
+        const currentPendingIdx = pending.findIndex((t) => t.id === spotlightId);
+        const nextIdx = currentPendingIdx === -1 ? 0 : (currentPendingIdx + 1) % pending.length;
+        spotlightId = pending[nextIdx].id;
+      }
+
+      const fullIdx = tasks.findIndex((t) => t.id === spotlightId);
+      spotlightTip = PICK_TIPS[fullIdx % PICK_TIPS.length];
+      activeFilter = "All";
+      resetFocusTimer();
+      render();
+    }
+
+    function completeTaskById(taskId) {
+      const idx = tasks.findIndex((t) => t.id === taskId);
+      if (idx === -1) return;
+      const task = tasks[idx];
+      const wasAllDone = tasks.length > 0 && tasks.every((t) => t.done);
+      const wasDone = task.done;
+      task.done = !task.done;
+
+      if (!wasDone && task.done) {
+        justCheckedId = task.id;
+        showSequenceMessage(idx);
+        const isAllDoneNow = tasks.length > 0 && tasks.every((t) => t.done);
+        if (!wasAllDone && isAllDoneNow) {
+          celebrateAllDone();
+        } else {
+          miniBurst();
+        }
+        // Automatically advance spotlight to the next uncompleted task in sequence if spotlight was open
+        if (spotlightOpen && spotlightId === task.id) {
+          const nextPending = tasks.find((t) => !t.done);
+          spotlightId = nextPending ? nextPending.id : null;
+          resetFocusTimer();
+        }
+      } else {
+        justCheckedId = null;
+      }
+
+      updateStreakIfAllDone();
+      saveState();
+      render();
+    }
+
+    function moveTask(taskId, direction) {
+      const idx = tasks.findIndex((t) => t.id === taskId);
+      if (idx === -1) return;
+      const targetIdx = idx + direction;
+      if (targetIdx < 0 || targetIdx >= tasks.length) return;
+      const [moved] = tasks.splice(idx, 1);
+      tasks.splice(targetIdx, 0, moved);
+      saveState();
+      render();
+    }
+
+    function renderSpotlight() {
+      if (!spotlightOpen) {
+        spotlightCardEl.classList.add("hidden");
+        return;
+      }
+      spotlightCardEl.classList.remove("hidden");
+
+      const picked = tasks.find((t) => t.id === spotlightId && !t.done);
+      if (!picked) {
+        const firstPending = tasks.find((t) => !t.done);
+        if (firstPending) {
+          spotlightId = firstPending.id;
+        }
+      }
+
+      const activePicked = tasks.find((t) => t.id === spotlightId && !t.done);
+      if (!activePicked) {
+        spotlightStepBadgeEl.textContent = "All Clear";
+        spotlightCatEl.className = "hidden";
+        spotlightTaskNameEl.textContent = "Your list is clear—pick a quick common win below or add a new task!";
+        spotlightTipEl.textContent = "Great job staying on top of your day.";
+        spotlightControlsEl.classList.add("hidden");
+      } else {
+        const seqNum = tasks.findIndex((t) => t.id === activePicked.id) + 1;
+        const catMeta = CATEGORY_MAP[activePicked.category] || CATEGORY_MAP.Personal;
+        spotlightStepBadgeEl.textContent = `Step #${seqNum} in Sequence`;
+        spotlightCatEl.className = `text-[11px] font-semibold px-2 py-0.5 rounded-md border ${catMeta.badge}`;
+        spotlightCatEl.textContent = activePicked.category;
+        spotlightTaskNameEl.textContent = activePicked.name;
+        spotlightTipEl.textContent = spotlightTip;
+        spotlightControlsEl.classList.remove("hidden");
+        focusTimerDisplayEl.textContent = formatTimer(timerSeconds);
+      }
+
+      // Render common quick wins (exclude ones already in today's list)
+      const mode = THEMES[activeTheme].mode;
+      commonWinsListEl.innerHTML = "";
+      const existingNames = new Set(tasks.map((t) => t.name.toLowerCase()));
+      const suggestions = COMMON_QUICK_WINS.filter((item) => !existingNames.has(item.name.toLowerCase())).slice(0, 4);
+
+      if (suggestions.length === 0) {
+        const note = document.createElement("span");
+        note.className = "text-xs text-slate-400";
+        note.textContent = "All quick wins are already on your list!";
+        commonWinsListEl.appendChild(note);
+      } else {
+        suggestions.forEach((item) => {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className =
+            mode === "black"
+              ? "text-xs font-medium px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors"
+              : mode === "eyecare"
+                ? "text-xs font-medium px-2.5 py-1 rounded-lg bg-[#fbf6ec] hover:bg-[#eadec5] text-[#3d3528] border border-[#d6c4a0] transition-colors"
+                : "text-xs font-medium px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 text-slate-700 border border-slate-200 transition-colors";
+          chip.textContent = `+ ${item.name}`;
+          chip.addEventListener("click", () => {
+            const newTask = {
+              id: nextId++,
+              name: item.name,
+              category: item.category,
+              done: false
+            };
+            tasks.push(newTask);
+            if (!spotlightId) spotlightId = newTask.id;
+            saveState();
+            render();
+          });
+          commonWinsListEl.appendChild(chip);
+        });
+      }
+    }
+
+    function renderFilters() {
+      const mode = THEMES[activeTheme].mode;
+      filterBarEl.innerHTML = "";
+      const filterNames = ["All", ...CATEGORY_LIST.map((c) => c.name)];
+
+      filterNames.forEach((filterName) => {
+        const count =
+          filterName === "All"
+            ? tasks.length
+            : tasks.filter((t) => t.category === filterName).length;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        const isActive = activeFilter === filterName;
+        if (isActive) {
+          const activeClass =
+            filterName === "All"
+              ? mode === "black"
+                ? "bg-white text-black"
+                : "bg-slate-900 text-white"
+              : CATEGORY_MAP[filterName].pillActive;
+          btn.className = `px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${activeClass}`;
+        } else {
+          btn.className =
+            mode === "black"
+              ? "px-3 py-1.5 rounded-full text-xs font-medium bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-800 transition-colors"
+              : mode === "eyecare"
+                ? "px-3 py-1.5 rounded-full text-xs font-medium bg-[#f3ead8] text-[#4e4332] hover:bg-[#eadec5] transition-colors"
+                : "px-3 py-1.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200/80 transition-colors";
+        }
+        btn.textContent = `${filterName} (${count})`;
+
+        btn.addEventListener("click", () => {
+          activeFilter = filterName;
+          editingId = null;
+          saveState();
+          render();
+        });
+
+        filterBarEl.appendChild(btn);
+      });
+    }
+
+    // 3. Main Render
+    function render() {
+      applyTheme();
+      updateDynamicClock();
+      renderSpotlight();
+      renderFilters();
+      taskListEl.innerHTML = "";
+
+      const mode = THEMES[activeTheme].mode;
+      const visibleTasks =
+        activeFilter === "All"
+          ? tasks
+          : tasks.filter((t) => t.category === activeFilter);
+
+      if (visibleTasks.length === 0) {
+        const emptyItem = document.createElement("li");
+        emptyItem.className =
+          mode === "black"
+            ? "text-center text-sm text-zinc-500 py-7 border border-dashed border-zinc-800 rounded-2xl"
+            : mode === "eyecare"
+              ? "text-center text-sm text-[#7e705a] py-7 border border-dashed border-[#d6c4a0] rounded-2xl"
+              : "text-center text-sm text-slate-400 py-7 border border-dashed border-slate-200 rounded-2xl";
+        emptyItem.textContent =
+          activeFilter === "All"
+            ? "No tasks yet—add one above or open Pick for me."
+            : `No ${activeFilter} tasks yet.`;
+        taskListEl.appendChild(emptyItem);
+      } else {
+        visibleTasks.forEach((task) => {
+          const fullIndex = tasks.findIndex((t) => t.id === task.id);
+          const catMeta = CATEGORY_MAP[task.category] || CATEGORY_MAP.Personal;
+          const isSpotlight = spotlightOpen && spotlightId === task.id;
+
+          const li = document.createElement("li");
+          let baseCard = "";
+          if (task.done) {
+            baseCard =
+              mode === "black"
+                ? "border-emerald-500/40 bg-emerald-950/30"
+                : mode === "eyecare"
+                  ? "border-[#b5cbb0] bg-[#eaf1e6]"
+                  : "border-emerald-200 bg-emerald-50/60";
+          } else {
+            baseCard =
+              mode === "black"
+                ? "border-zinc-800 bg-zinc-900 hover:border-zinc-700 hover:-translate-y-0.5 hover:shadow-md"
+                : mode === "eyecare"
+                  ? "border-[#dfd1b4] bg-[#fffcf5] hover:border-[#cbb893] hover:-translate-y-0.5 hover:shadow-sm"
+                  : "border-slate-200/90 bg-white hover:border-slate-300 hover:-translate-y-0.5 hover:shadow-md";
+          }
+          li.className = `flex items-center gap-2 p-2.5 rounded-2xl border border-l-4 ${catMeta.accent} ${baseCard} transition-all duration-200 ${isSpotlight ? "spotlight-ring ring-2 ring-indigo-500" : ""}`;
+
+          if (editingId === task.id) {
+            const editForm = document.createElement("form");
+            editForm.className = "flex-1 flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0";
+
+            const editInput = document.createElement("input");
+            editInput.type = "text";
+            editInput.value = task.name;
+            editInput.maxLength = 80;
+            editInput.className =
+              mode === "black"
+                ? "flex-1 min-w-0 px-2.5 py-1.5 text-sm rounded-lg border border-violet-400 bg-black text-white focus:outline-none"
+                : "flex-1 min-w-0 px-2.5 py-1.5 text-sm rounded-lg border border-indigo-400 bg-white text-slate-900 focus:outline-none";
+
+            const editCatSelect = document.createElement("select");
+            editCatSelect.className =
+              mode === "black"
+                ? "px-2 py-1.5 text-xs font-medium rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-100"
+                : "px-2 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 text-slate-700";
+            CATEGORY_LIST.forEach((cat) => {
+              const opt = document.createElement("option");
+              opt.value = cat.name;
+              opt.textContent = cat.name;
+              if (cat.name === task.category) opt.selected = true;
+              editCatSelect.appendChild(opt);
+            });
+
+            const saveBtn = document.createElement("button");
+            saveBtn.type = "submit";
+            saveBtn.className = "px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shrink-0";
+            saveBtn.textContent = "Save";
+
+            const cancelBtn = document.createElement("button");
+            cancelBtn.type = "button";
+            cancelBtn.className =
+              mode === "black"
+                ? "px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium shrink-0"
+                : "px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium shrink-0";
+            cancelBtn.textContent = "Cancel";
+
+            editForm.addEventListener("submit", (e) => {
+              e.preventDefault();
+              const updatedName = editInput.value.trim();
+              if (updatedName) task.name = updatedName;
+              if (CATEGORY_MAP[editCatSelect.value]) task.category = editCatSelect.value;
+              editingId = null;
+              saveState();
+              render();
+            });
+
+            editInput.addEventListener("keydown", (e) => {
+              if (e.key === "Escape") {
+                editingId = null;
+                render();
+              }
+            });
+
+            cancelBtn.addEventListener("click", () => {
+              editingId = null;
+              render();
+            });
+
+            editForm.appendChild(editInput);
+            editForm.appendChild(editCatSelect);
+            editForm.appendChild(saveBtn);
+            editForm.appendChild(cancelBtn);
+            li.appendChild(editForm);
+            taskListEl.appendChild(li);
+
+            setTimeout(() => {
+              editInput.focus();
+              editInput.select();
+            }, 0);
+            return;
+          }
+
+          // Toggle checkbox + task title + category pill
+          const toggleBtn = document.createElement("button");
+          toggleBtn.type = "button";
+          toggleBtn.className = "flex-1 flex items-center gap-3 p-1 text-left min-w-0";
+          toggleBtn.setAttribute("aria-pressed", String(task.done));
+
+          const checkCircle = document.createElement("span");
+          const bounceClass = justCheckedId === task.id ? "animate-check" : "";
+          checkCircle.className = task.done
+            ? `w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 text-white flex items-center justify-center shrink-0 text-xs font-bold shadow-xs ${bounceClass}`
+            : mode === "black"
+              ? "w-6 h-6 rounded-full border-2 border-zinc-600 hover:border-violet-400 flex items-center justify-center shrink-0 transition-colors"
+              : mode === "eyecare"
+                ? "w-6 h-6 rounded-full border-2 border-[#c8b288] hover:border-[#5a8f69] flex items-center justify-center shrink-0 transition-colors"
+                : "w-6 h-6 rounded-full border-2 border-slate-300 hover:border-indigo-400 flex items-center justify-center shrink-0 transition-colors";
+          checkCircle.textContent = task.done ? "✓" : "";
+
+          const textWrap = document.createElement("div");
+          textWrap.className = "min-w-0 flex-1";
+
+          const label = document.createElement("span");
+          label.className = task.done
+            ? mode === "black"
+              ? "block text-sm font-medium text-emerald-300/80 line-through truncate"
+              : "block text-sm font-medium text-emerald-900/75 line-through truncate"
+            : mode === "black"
+              ? "block text-sm font-semibold text-zinc-100 truncate"
+              : mode === "eyecare"
+                ? "block text-sm font-semibold text-[#2f281d] truncate"
+                : "block text-sm font-semibold text-slate-800 truncate";
+          label.textContent = task.name;
+
+          const catBadge = document.createElement("span");
+          catBadge.className = `inline-block mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border ${catMeta.badge}`;
+          catBadge.textContent = task.category;
+
+          textWrap.appendChild(label);
+          textWrap.appendChild(catBadge);
+          toggleBtn.appendChild(checkCircle);
+          toggleBtn.appendChild(textWrap);
+
+          toggleBtn.addEventListener("click", () => completeTaskById(task.id));
+
+          // Action Controls
+          const actions = document.createElement("div");
+          actions.className = "flex items-center gap-0.5 shrink-0";
+          const actionBtnClass =
+            mode === "black"
+              ? "w-7 h-7 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 flex items-center justify-center text-xs transition-colors"
+              : mode === "eyecare"
+                ? "w-7 h-7 rounded-lg text-[#7e705a] hover:text-[#2f281d] hover:bg-[#eadec5] flex items-center justify-center text-xs transition-colors"
+                : "w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center text-xs transition-colors";
+
+          const upBtn = document.createElement("button");
+          upBtn.type = "button";
+          upBtn.disabled = fullIndex === 0;
+          upBtn.className = fullIndex === 0
+            ? "w-7 h-7 rounded-lg text-slate-300/40 cursor-not-allowed flex items-center justify-center text-xs"
+            : actionBtnClass;
+          upBtn.setAttribute("aria-label", `Move ${task.name} up`);
+          upBtn.title = "Move up";
+          upBtn.textContent = "↑";
+          upBtn.addEventListener("click", () => moveTask(task.id, -1));
+
+          const downBtn = document.createElement("button");
+          downBtn.type = "button";
+          downBtn.disabled = fullIndex === tasks.length - 1;
+          downBtn.className = fullIndex === tasks.length - 1
+            ? "w-7 h-7 rounded-lg text-slate-300/40 cursor-not-allowed flex items-center justify-center text-xs"
+            : actionBtnClass;
+          downBtn.setAttribute("aria-label", `Move ${task.name} down`);
+          downBtn.title = "Move down";
+          downBtn.textContent = "↓";
+          downBtn.addEventListener("click", () => moveTask(task.id, 1));
+
+          const renameBtn = document.createElement("button");
+          renameBtn.type = "button";
+          renameBtn.className = actionBtnClass;
+          renameBtn.setAttribute("aria-label", `Edit ${task.name}`);
+          renameBtn.title = "Edit";
+          renameBtn.textContent = "✎";
+          renameBtn.addEventListener("click", () => {
+            editingId = task.id;
+            render();
+          });
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.className =
+            mode === "black"
+              ? "w-7 h-7 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-rose-950/50 flex items-center justify-center text-base leading-none transition-colors"
+              : "w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center text-base leading-none transition-colors";
+          deleteBtn.setAttribute("aria-label", `Remove ${task.name}`);
+          deleteBtn.title = "Remove";
+          deleteBtn.textContent = "×";
+          deleteBtn.addEventListener("click", () => {
+            if (spotlightId === task.id) {
+              spotlightId = null;
+              resetFocusTimer();
+            }
+            tasks = tasks.filter((t) => t.id !== task.id);
+            updateStreakIfAllDone();
+            saveState();
+            render();
+          });
+
+          actions.appendChild(upBtn);
+          actions.appendChild(downBtn);
+          actions.appendChild(renameBtn);
+          actions.appendChild(deleteBtn);
+
+          li.appendChild(toggleBtn);
+          li.appendChild(actions);
+          taskListEl.appendChild(li);
+        });
+      }
+
+      // Dynamic progress & remaining count
+      const completedCount = tasks.filter((t) => t.done).length;
+      const totalCount = tasks.length;
+      const remainingCount = totalCount - completedCount;
+      const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+      progressLabelEl.textContent = `${percent}% done`;
+      progressTextEl.textContent = `${completedCount} of ${totalCount} completed`;
+      progressBarEl.style.width = `${percent}%`;
+      streakBadgeEl.textContent = `${streak}-day streak`;
+
+      remainingTextEl.textContent =
+        totalCount === 0
+          ? "No tasks yet"
+          : remainingCount === 0
+            ? "All done for today"
+            : `${remainingCount} ${remainingCount === 1 ? "task" : "tasks"} left today`;
+
+      clearCompletedBtn.disabled = completedCount === 0;
+      clearCompletedBtn.className =
+        completedCount === 0
+          ? "text-xs font-medium text-slate-400/50 px-2.5 py-1.5 rounded-lg cursor-not-allowed"
+          : mode === "black"
+            ? "text-xs font-medium text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-zinc-800 transition-colors"
+            : "text-xs font-medium text-slate-600 hover:text-slate-900 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors";
+
+      resetBtn.className =
+        mode === "black"
+          ? "text-xs font-medium text-zinc-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-zinc-800 transition-colors"
+          : "text-xs font-medium text-slate-600 hover:text-slate-900 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors";
+
+      justCheckedId = null;
+    }
+
+    // 4. Pick For Me (Sequential) & Focus Timer Controls
+    pickForMeBtn.addEventListener("click", () => pickNextInSequence(false));
+    spotlightNextBtn.addEventListener("click", () => pickNextInSequence(true));
+    spotlightCloseBtn.addEventListener("click", () => {
+      spotlightOpen = false;
+      spotlightId = null;
+      resetFocusTimer();
+      render();
+    });
+    spotlightDoneBtn.addEventListener("click", () => {
+      if (spotlightId !== null) {
+        completeTaskById(spotlightId);
+      }
+    });
+
+    focusTimerToggleBtn.addEventListener("click", () => {
+      if (timerInterval) {
+        stopFocusTimer();
+        return;
+      }
+      if (timerSeconds <= 0) timerSeconds = 600;
+      focusTimerToggleBtn.textContent = "Pause";
+      timerInterval = setInterval(() => {
+        timerSeconds -= 1;
+        focusTimerDisplayEl.textContent = formatTimer(Math.max(0, timerSeconds));
+        if (timerSeconds <= 0) {
+          stopFocusTimer();
+          focusTimerToggleBtn.textContent = "Done!";
+          miniBurst();
+        }
+      }, 1000);
+    });
+
+    focusTimerResetBtn.addEventListener("click", resetFocusTimer);
+
+    // 5. Add Task
+    addTaskForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const name = taskInput.value.trim();
+      if (!name) return;
+
+      const selectedCategory = categorySelect.value;
+      tasks.push({
+        id: nextId++,
+        name,
+        category: CATEGORY_MAP[selectedCategory] ? selectedCategory : "Personal",
+        done: false
+      });
+
+      if (activeFilter !== "All" && activeFilter !== selectedCategory) {
+        activeFilter = "All";
+      }
+
+      taskInput.value = "";
+      taskInput.focus();
+      saveState();
+      render();
+    });
+
+    // 6. Clear completed tasks
+    clearCompletedBtn.addEventListener("click", () => {
+      tasks = tasks.filter((t) => !t.done);
+      editingId = null;
+      if (spotlightId && !tasks.some((t) => t.id === spotlightId)) {
+        spotlightId = null;
+        resetFocusTimer();
+      }
+      saveState();
+      render();
+    });
+
+    // 7. Reset day checkmarks
+    resetBtn.addEventListener("click", () => {
+      tasks.forEach((t) => {
+        t.done = false;
+      });
+      editingId = null;
+      spotlightId = null;
+      resetFocusTimer();
+      messageTextEl.textContent = "Fresh start! Check off a task whenever you're ready.";
+      saveState();
+      render();
+    });
+
+    // Initial render
+    render();
+    // Register PWA service worker for offline support
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
