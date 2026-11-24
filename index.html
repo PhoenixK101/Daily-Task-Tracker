@@ -16,6 +16,15 @@
     body {
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
     }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
     @keyframes popIn {
       0% { opacity: 0; transform: translateY(6px) scale(0.98); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -25,242 +34,542 @@
       55% { transform: scale(1.14); }
       100% { transform: scale(1); }
     }
+    @keyframes slideUpFade {
+      0% { opacity: 0; transform: translateY(6px); }
+      15% { opacity: 1; transform: translateY(0); }
+      85% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-6px); }
+    }
     @keyframes spotlightPulse {
       0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.35); }
       50% { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0); }
     }
     .animate-pop {
-      animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      animation: popIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .animate-check {
       animation: checkBounce 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
+    .animate-placeholder {
+      animation: slideUpFade 3s ease-in-out;
+    }
     .spotlight-ring {
       animation: spotlightPulse 1.4s ease-in-out 2;
     }
-
-  /* ...your existing styles stay above this... */
-
-  @media (max-width: 600px) {
-    #page-body {
-      padding: 4px !important;
-    }
-    #app-card {
-      padding: 8px !important;
-      border-radius: 14px !important;
-    }
-    #app-card,
-    #app-card * {
-      font-size: 12px !important;
-      line-height: 1.25 !important;
-    }
-    #app-card button,
-    #app-card input,
-    #app-card select {
-      padding: 4px 6px !important;
-    }
-    #app-card li *,
-#app-card [id*="task"] *,
-#app-card [class*="task"] *,
-#app-card [class*="truncate"] {
-  white-space: normal !important;
-  overflow: visible !important;
-  text-overflow: clip !important;
-  word-break: break-word !important;
-}
-</style>
+  </style>
 </head>
 <body id="page-body" class="min-h-screen bg-slate-100 text-slate-900 flex items-center justify-center p-4 sm:p-6 transition-colors duration-500">
   <main id="app-card" class="w-full max-w-xl bg-white rounded-3xl shadow-xl border border-slate-200/80 p-5 sm:p-7 transition-colors duration-300">
-    <!-- Top Bar: Streak, 3 Color Modes, Date -->
-    <header class="mb-5">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="flex items-center gap-2">
-          <span id="streak-badge" class="text-xs font-bold text-amber-800 bg-amber-100 border border-amber-300/80 px-3 py-1 rounded-full">
+
+    <!-- ==================== PAGE 1: HOME VIEW ==================== -->
+    <div id="home-view">
+      <header class="mb-5">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span id="streak-badge" class="text-xs font-bold text-amber-800 bg-amber-100/90 border border-amber-300/80 px-3 py-1 rounded-full">
             0-day streak
           </span>
-          <!-- 3 Theme Dots: 1. Bright, 2. Eye Care, 3. Dynamic Black -->
-          <div id="theme-switcher" class="flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-full border border-slate-200" role="group" aria-label="Color theme"></div>
-        </div>
-        <span id="today-date" class="text-xs text-slate-500 font-medium"></span>
-      </div>
-
-      <div class="flex items-end justify-between gap-3 mt-3.5">
-        <div>
-          <h1 id="greeting-title" class="text-2xl font-extrabold tracking-tight text-slate-900">Task Tracker</h1>
-          <p id="subtitle-text" class="text-sm text-slate-500 mt-0.5">Pick your mode, organize by category, and keep your streak alive.</p>
-        </div>
-        <button
-          id="pick-for-me-btn"
-          type="button"
-          class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-600 hover:to-violet-600 text-white shadow-sm shrink-0 transition-all hover:-translate-y-0.5 active:translate-y-0"
-          title="Step through your tasks in sequence or pick a quick common win"
-        >
-          Pick for me
-        </button>
-      </div>
-    </header>
-
-    <!-- Progress Section -->
-    <section id="progress-card" class="mb-4 rounded-2xl p-4 bg-slate-50 border border-slate-200/80 transition-colors" aria-label="Daily progress">
-      <div class="flex items-center justify-between text-sm mb-2">
-        <span id="progress-label" class="font-bold text-slate-800">0% done</span>
-        <span id="progress-text" class="font-semibold text-indigo-700">0 of 3 completed</span>
-      </div>
-      <div id="progress-track" class="w-full h-3 bg-slate-200/80 rounded-full overflow-hidden p-0.5">
-        <div
-          id="progress-bar"
-          class="h-full rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-indigo-500 via-violet-500 to-emerald-500"
-          style="width: 0%"
-        ></div>
-      </div>
-    </section>
-
-    <!-- Sequential Pick-For-Me Spotlight Card -->
-    <section
-      id="spotlight-card"
-      class="hidden mb-4 rounded-2xl p-4 border animate-pop"
-      aria-label="Picked task focus mode"
-    >
-      <div class="flex flex-wrap items-start justify-between gap-2 mb-2.5">
-        <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-2 mb-1">
-            <span id="spotlight-step-badge" class="text-[11px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">
-              Next in Sequence
-            </span>
-            <span id="spotlight-cat" class="text-[11px] font-semibold px-2 py-0.5 rounded-md border"></span>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span id="today-date" class="text-xs text-slate-500 font-medium mr-1"></span>
+            <button
+              id="history-toggle-btn"
+              type="button"
+              class="px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors"
+              title="Open 7-Day & Monthly History"
+            >
+              History
+            </button>
+            <button
+              id="settings-toggle-btn"
+              type="button"
+              class="px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors"
+              title="Open Settings"
+            >
+              ⚙ Settings
+            </button>
           </div>
-          <p id="spotlight-task-name" class="text-sm font-bold truncate"></p>
-          <p id="spotlight-tip" class="text-xs mt-0.5"></p>
         </div>
-        <button
-          id="spotlight-close-btn"
-          type="button"
-          class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-black/5 flex items-center justify-center text-base leading-none shrink-0"
-          aria-label="Close focus card"
-        >
-          ×
-        </button>
-      </div>
 
-      <div id="spotlight-controls" class="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t">
-        <div class="flex items-center gap-2">
-          <span id="focus-timer-display" class="text-sm font-mono font-bold px-2.5 py-1 rounded-lg border">
-            10:00
-          </span>
+        <div class="flex items-center justify-between gap-3 mt-4">
+          <h1 id="greeting-title" class="text-2xl font-extrabold tracking-tight text-slate-900">Task Tracker</h1>
           <button
-            id="focus-timer-toggle"
+            id="pick-for-me-btn"
             type="button"
-            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+            class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shrink-0 transition-all hover:-translate-y-0.5 active:translate-y-0"
+            title="Open Focus Mode & Timer"
           >
-            Start 10m
-          </button>
-          <button
-            id="focus-timer-reset"
-            type="button"
-            class="px-2 py-1 rounded-lg text-xs font-medium transition-colors"
-          >
-            Reset
+            Focus Mode
           </button>
         </div>
+      </header>
+
+      <!-- Progress Section -->
+      <section id="progress-card" class="mb-4 rounded-2xl p-4 bg-slate-50 border border-slate-200/80 transition-colors" aria-label="Daily progress">
+        <div class="flex items-center justify-between text-sm mb-2">
+          <span id="progress-label" class="font-bold text-slate-800">0% done</span>
+          <span id="progress-text" class="font-semibold text-indigo-700">0 of 3 completed</span>
+        </div>
+        <div id="progress-track" class="w-full h-3 bg-slate-200/80 rounded-full overflow-hidden p-0.5">
+          <div
+            id="progress-bar"
+            class="h-full rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-indigo-500 via-violet-500 to-emerald-500"
+            style="width: 0%"
+          ></div>
+        </div>
+      </section>
+
+      <!-- Focus Mode & Timer Card -->
+      <section
+        id="spotlight-card"
+        class="hidden mb-4 rounded-2xl p-4 border animate-pop"
+        aria-label="Focus Mode"
+      >
+        <div class="flex items-start justify-between gap-2 mb-3">
+          <div class="min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-1.5 mb-1">
+              <span id="spotlight-step-badge" class="text-[11px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">
+                Focus #1
+              </span>
+              <span id="spotlight-cat" class="text-[11px] font-semibold px-2 py-0.5 rounded-md border"></span>
+            </div>
+            <p id="spotlight-task-name" class="text-base font-bold leading-snug break-words"></p>
+          </div>
+          <button
+            id="spotlight-close-btn"
+            type="button"
+            class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-black/5 flex items-center justify-center text-base leading-none shrink-0"
+            aria-label="Close Focus Mode"
+          >
+            ×
+          </button>
+        </div>
+
+        <div id="spotlight-controls" class="rounded-xl p-3 border mb-3 space-y-2.5">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-baseline gap-2">
+              <span id="focus-timer-display" class="text-xl font-mono font-extrabold tracking-tight">10:00</span>
+              <span id="focus-timer-meta" class="text-[11px] font-semibold opacity-75">remaining</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button
+                id="focus-timer-toggle"
+                type="button"
+                class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+              >
+                Start 10m
+              </button>
+              <button
+                id="focus-timer-reset"
+                type="button"
+                class="px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+              >
+                End / Reset
+              </button>
+            </div>
+          </div>
+
+          <div class="w-full h-2 bg-black/10 rounded-full overflow-hidden">
+            <div
+              id="focus-timer-bar"
+              class="h-full bg-indigo-500 rounded-full transition-all duration-500"
+              style="width: 100%"
+            ></div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <button
+              id="spotlight-next-btn"
+              type="button"
+              class="px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors"
+            >
+              Skip to next →
+            </button>
+            <button
+              id="spotlight-done-btn"
+              type="button"
+              class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+            >
+              Complete task ✓
+            </button>
+          </div>
+        </div>
+
+        <div id="common-wins-wrap">
+          <div class="flex items-center justify-between mb-1.5">
+            <p id="common-wins-label" class="text-[11px] font-semibold uppercase tracking-wider">
+              Quick add useful tasks
+            </p>
+            <button
+              id="refresh-ideas-btn"
+              type="button"
+              class="text-[11px] font-semibold hover:underline"
+            >
+              More ideas ↻
+            </button>
+          </div>
+          <div id="common-wins-list" class="flex flex-wrap gap-1.5"></div>
+        </div>
+      </section>
+
+      <!-- Completion / Reminder Banner -->
+      <section
+        id="message-box"
+        class="mb-5 rounded-2xl px-4 py-3 border transition-all"
+        aria-live="polite"
+      >
+        <p id="message-text" class="text-sm font-semibold leading-snug">
+          Complete today's list to earn your 1-day streak.
+        </p>
+      </section>
+
+      <!-- Add Task Form with Animated Rotating Example Placeholder -->
+      <form id="add-task-form" class="space-y-2.5 mb-4">
+        <div class="flex gap-2">
+          <div class="relative flex-1 min-w-0">
+            <label for="task-input" class="sr-only">New task name</label>
+            <input
+              id="task-input"
+              type="text"
+              placeholder=""
+              maxlength="120"
+              class="w-full px-3.5 py-2.5 text-sm rounded-xl border transition-all focus:outline-none"
+            />
+            <span
+              id="animated-placeholder"
+              class="pointer-events-none absolute inset-y-0 left-3.5 right-3 flex items-center text-sm text-slate-400 truncate"
+            >
+              What's on your list? (e.g. Lunch break)
+            </span>
+          </div>
+          <button
+            id="add-btn"
+            type="submit"
+            class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold shrink-0 shadow-sm transition-all"
+          >
+            Add
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <div id="add-time-group" class="inline-flex items-center gap-1 rounded-xl border px-2.5 py-1.5 transition-all">
+            <label for="add-hour-select" class="sr-only">Hour</label>
+            <select id="add-hour-select" class="text-xs font-semibold bg-transparent focus:outline-none cursor-pointer"></select>
+            <span id="add-time-extra" class="hidden inline-flex items-center gap-1">
+              <span class="text-xs font-bold opacity-50">:</span>
+              <label for="add-min-select" class="sr-only">Minute</label>
+              <select id="add-min-select" class="text-xs font-semibold bg-transparent focus:outline-none cursor-pointer"></select>
+              <button
+                id="add-ampm-btn"
+                type="button"
+                class="ml-0.5 px-2 py-0.5 rounded-md text-[11px] font-bold transition-colors"
+                title="Toggle AM or PM"
+              >
+                PM
+              </button>
+            </span>
+          </div>
+
+          <label for="category-select" class="sr-only">Category</label>
+          <select
+            id="category-select"
+            class="px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all focus:outline-none cursor-pointer"
+          ></select>
+
+          <div id="inline-custom-cat" class="hidden flex items-center gap-1.5 animate-pop">
+            <input
+              id="inline-custom-cat-input"
+              type="text"
+              placeholder="Category name..."
+              maxlength="20"
+              class="w-32 px-2.5 py-1.5 text-xs rounded-xl border focus:outline-none"
+            />
+            <button
+              id="inline-custom-cat-save"
+              type="button"
+              class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold"
+            >
+              Save
+            </button>
+            <button
+              id="inline-custom-cat-cancel"
+              type="button"
+              class="px-2 py-1.5 rounded-xl text-xs font-medium opacity-75 hover:opacity-100"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Dynamic Category Filter Tabs -->
+      <nav id="filter-bar" class="flex flex-wrap items-center gap-1.5 mb-4" aria-label="Filter tasks by category"></nav>
+
+      <!-- Task List -->
+      <section aria-label="Task list">
+        <ul id="task-list" class="space-y-2.5"></ul>
+      </section>
+
+      <!-- Footer Controls -->
+      <footer id="app-footer" class="mt-6 pt-4 border-t flex flex-wrap items-center justify-between gap-2">
+        <p id="remaining-text" class="text-xs font-semibold">3 tasks left today</p>
         <div class="flex items-center gap-1.5">
           <button
-            id="spotlight-next-btn"
+            id="clear-completed-btn"
             type="button"
-            class="px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors"
+            class="text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
           >
-            Next in list →
+            Clear completed
           </button>
           <button
-            id="spotlight-done-btn"
+            id="reset-btn"
             type="button"
-            class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+            class="text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
           >
-            Mark done ✓
+            Reset day
           </button>
         </div>
-      </div>
+      </footer>
+    </div>
 
-      <!-- Common Quick Wins (besides the user's task list) -->
-      <div id="common-wins-wrap" class="mt-3 pt-2.5 border-t">
-        <p id="common-wins-label" class="text-[11px] font-semibold uppercase tracking-wider mb-1.5">
-          Or add a quick common win
-        </p>
-        <div id="common-wins-list" class="flex flex-wrap gap-1.5"></div>
-      </div>
-    </section>
-
-    <!-- Sequential Completion Banner -->
-    <section
-      id="message-box"
-      class="mb-5 rounded-2xl px-4 py-3 border transition-all"
-      aria-live="polite"
-    >
-      <p id="message-text" class="text-sm font-semibold leading-snug">
-        Lock in your first task—small wins set the tone for the whole day.
-      </p>
-    </section>
-
-    <!-- Add Task Form -->
-    <form id="add-task-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-      <label for="task-input" class="sr-only">New task name</label>
-      <input
-        id="task-input"
-        type="text"
-        placeholder="What's on your list today?"
-        maxlength="80"
-        class="flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border transition-all focus:outline-none"
-      />
-      <div class="flex gap-2">
-        <label for="category-select" class="sr-only">Category</label>
-        <select
-          id="category-select"
-          class="px-3 py-2.5 text-sm font-semibold rounded-xl border transition-all focus:outline-none"
-        ></select>
+    <!-- ==================== PAGE 2: HISTORY VIEW (7-DAY & MONTH, CLICKABLE) ==================== -->
+    <div id="history-view" class="hidden animate-pop space-y-5" aria-label="History page">
+      <header class="flex items-center justify-between pb-3 border-b border-slate-200/60">
         <button
-          id="add-btn"
-          type="submit"
-          class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-sm font-semibold shrink-0 shadow-sm transition-all"
-        >
-          Add
-        </button>
-      </div>
-    </form>
-
-    <!-- Dynamic Category Filter Tabs -->
-    <nav id="filter-bar" class="flex flex-wrap items-center gap-1.5 mb-4" aria-label="Filter tasks by category"></nav>
-
-    <!-- Task List -->
-    <section aria-label="Task list">
-      <ul id="task-list" class="space-y-2.5"></ul>
-    </section>
-
-    <!-- Footer Controls -->
-    <footer id="app-footer" class="mt-6 pt-4 border-t flex flex-wrap items-center justify-between gap-2">
-      <p id="remaining-text" class="text-xs font-semibold">3 tasks left today</p>
-      <div class="flex items-center gap-1.5">
-        <button
-          id="clear-completed-btn"
+          id="history-back-btn"
           type="button"
-          class="text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+          class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors"
         >
-          Clear completed
+          ← Back
         </button>
+        <h2 class="text-lg font-extrabold tracking-tight">Activity History</h2>
+        <span class="w-14"></span>
+      </header>
+
+      <!-- Selected Day Detail Card -->
+      <section id="history-detail-card" class="rounded-2xl p-3.5 border space-y-2">
+        <div class="flex items-center justify-between gap-2">
+          <p id="history-detail-date" class="text-sm font-bold"></p>
+          <span id="history-detail-badge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full"></span>
+        </div>
+        <ul id="history-detail-items" class="space-y-1 text-xs"></ul>
+      </section>
+
+      <!-- Recent 7 Days (Clickable) -->
+      <section>
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-xs font-bold uppercase tracking-wider opacity-70">Recent 7 Days (Tap a day)</p>
+          <span id="weekly-summary-text" class="text-xs font-semibold text-indigo-600"></span>
+        </div>
+        <div id="weekly-history-grid" class="grid grid-cols-7 gap-1.5"></div>
+      </section>
+
+      <!-- Monthly History (Clickable) -->
+      <section class="pt-3 border-t border-slate-200/60">
+        <div class="flex items-center justify-between mb-2">
+          <p id="month-history-title" class="text-xs font-bold uppercase tracking-wider opacity-70">Month History</p>
+          <span id="monthly-summary-text" class="text-xs font-semibold text-emerald-600"></span>
+        </div>
+        <div id="monthly-stats-row" class="grid grid-cols-3 gap-2 mb-3"></div>
+        <div id="monthly-calendar-grid" class="grid grid-cols-7 gap-1.5"></div>
+      </section>
+    </div>
+
+    <!-- ==================== PAGE 3: SETTINGS VIEW ==================== -->
+    <div id="settings-view" class="hidden animate-pop space-y-5" aria-label="Settings page">
+      <header class="flex items-center justify-between pb-3 border-b border-slate-200/60">
         <button
-          id="reset-btn"
+          id="settings-back-btn"
           type="button"
-          class="text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors"
+          class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors"
         >
-          Reset day
+          ← Back
         </button>
-      </div>
-    </footer>
+        <h2 id="settings-heading" class="text-lg font-extrabold tracking-tight">Settings</h2>
+        <span class="w-14"></span>
+      </header>
+
+      <!-- 1. Screen Mode -->
+      <section>
+        <p class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">Screen Mode</p>
+        <div id="theme-switcher" class="grid grid-cols-3 gap-2" role="group" aria-label="Color theme"></div>
+      </section>
+
+      <!-- 2. Focus Timer (Presets + Multiple Custom Sec/Min Timers) -->
+      <section>
+        <p class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">Focus Timer Duration</p>
+        <div id="timer-duration-group" class="flex flex-wrap items-center gap-1.5 mb-2.5"></div>
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-2">
+          <div id="custom-timer-stepper" class="flex-1 min-w-[140px] flex items-center rounded-xl border overflow-hidden">
+            <button
+              id="custom-timer-minus"
+              type="button"
+              class="px-3 py-2 text-sm font-bold hover:bg-black/5 transition-colors"
+              aria-label="Decrease value"
+            >
+              −
+            </button>
+            <label for="custom-timer-input" class="sr-only">Custom timer value</label>
+            <input
+              id="custom-timer-input"
+              type="number"
+              min="5"
+              max="180"
+              placeholder="e.g. 30, 20, 10"
+              class="flex-1 min-w-0 px-2 py-2 text-xs text-center font-semibold bg-transparent focus:outline-none"
+            />
+            <button
+              id="custom-timer-plus"
+              type="button"
+              class="px-3 py-2 text-sm font-bold hover:bg-black/5 transition-colors"
+              aria-label="Increase value"
+            >
+              +
+            </button>
+          </div>
+          <button
+            id="custom-timer-unit-btn"
+            type="button"
+            class="px-3 py-2 rounded-xl text-xs font-bold border transition-colors shrink-0"
+            title="Switch between seconds and minutes"
+          >
+            sec
+          </button>
+          <button
+            id="custom-timer-save-btn"
+            type="button"
+            class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shrink-0"
+          >
+            Add timer
+          </button>
+        </div>
+      </section>
+
+      <!-- 3. Behavior & Alerts -->
+      <section class="space-y-2">
+        <p class="text-xs font-bold uppercase tracking-wider opacity-70 mb-1">Alerts &amp; Behavior</p>
+
+        <div id="settings-alert-row" class="flex items-center justify-between p-3 rounded-xl border">
+          <div>
+            <p class="text-xs font-semibold">Scheduled Time Alerts</p>
+            <p class="text-[11px] opacity-70">One gentle reminder at each task's time</p>
+          </div>
+          <button
+            id="notify-toggle-btn"
+            type="button"
+            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
+          >
+            Off
+          </button>
+        </div>
+
+        <div id="settings-sound-row" class="flex items-center justify-between p-3 rounded-xl border">
+          <div>
+            <p class="text-xs font-semibold">Timer End Sound</p>
+            <p class="text-[11px] opacity-70">Clear chime when focus timer finishes</p>
+          </div>
+          <button
+            id="sound-toggle-btn"
+            type="button"
+            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
+          >
+            On
+          </button>
+        </div>
+
+        <div id="settings-confetti-row" class="flex items-center justify-between p-3 rounded-xl border">
+          <div>
+            <p class="text-xs font-semibold">Celebration Effects</p>
+            <p class="text-[11px] opacity-70">Confetti burst when completing tasks</p>
+          </div>
+          <button
+            id="confetti-toggle-btn"
+            type="button"
+            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
+          >
+            On
+          </button>
+        </div>
+
+        <div id="settings-autonext-row" class="flex items-center justify-between p-3 rounded-xl border">
+          <div>
+            <p class="text-xs font-semibold">Auto-Advance Focus Mode</p>
+            <p class="text-[11px] opacity-70">Jump to the next task after finishing one</p>
+          </div>
+          <button
+            id="autonext-toggle-btn"
+            type="button"
+            class="text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors"
+          >
+            On
+          </button>
+        </div>
+      </section>
+
+      <!-- 4. Custom Categories -->
+      <section>
+        <p class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">Custom Categories</p>
+        <div class="flex gap-2 mb-2.5">
+          <input
+            id="settings-cat-input"
+            type="text"
+            placeholder="New category name..."
+            maxlength="20"
+            class="flex-1 min-w-0 px-3 py-2 text-xs rounded-xl border focus:outline-none"
+          />
+          <button
+            id="settings-add-cat-btn"
+            type="button"
+            class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shrink-0"
+          >
+            Add
+          </button>
+        </div>
+        <div id="settings-custom-cats" class="flex flex-wrap gap-1.5"></div>
+      </section>
+
+      <!-- 5. Backup & Data -->
+      <section class="pt-3 border-t border-slate-200/60">
+        <p class="text-xs font-bold uppercase tracking-wider opacity-70 mb-2">Data &amp; Backup</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            id="export-data-btn"
+            type="button"
+            class="px-3 py-2 rounded-xl text-xs font-semibold border transition-colors"
+          >
+            Export Tasks (.json)
+          </button>
+          <button
+            id="reset-all-btn"
+            type="button"
+            class="px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 border border-rose-200 bg-rose-50/70 hover:bg-rose-100 transition-colors"
+          >
+            Reset All Data
+          </button>
+          <div id="reset-confirm-wrap" class="hidden flex items-center gap-1.5">
+            <span class="text-xs font-semibold text-rose-600">Reset everything?</span>
+            <button
+              id="reset-confirm-yes"
+              type="button"
+              class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-600 text-white"
+            >
+              Yes
+            </button>
+            <button
+              id="reset-confirm-no"
+              type="button"
+              class="px-2.5 py-1 rounded-lg text-xs font-medium border"
+            >
+              No
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
   </main>
 
   <script>
-    const STORAGE_KEY = "daily_task_tracker_v5";
+    const STORAGE_KEY = "daily_task_tracker_v12";
 
-    // Exactly 3 color modes: 1. White/Bright, 2. Eye Care, 3. Dynamic Black
     const THEMES = {
       bright: {
         name: "White / Bright",
@@ -288,63 +597,209 @@
       }
     };
 
-    const CATEGORY_LIST = [
-      { name: "Work", accent: "border-l-blue-500", badge: "bg-blue-50 text-blue-700 border-blue-200", pillActive: "bg-blue-600 text-white" },
-      { name: "Study", accent: "border-l-indigo-500", badge: "bg-indigo-50 text-indigo-700 border-indigo-200", pillActive: "bg-indigo-600 text-white" },
-      { name: "Fitness", accent: "border-l-emerald-500", badge: "bg-emerald-50 text-emerald-700 border-emerald-200", pillActive: "bg-emerald-600 text-white" },
-      { name: "Creative", accent: "border-l-pink-500", badge: "bg-pink-50 text-pink-700 border-pink-200", pillActive: "bg-pink-600 text-white" },
-      { name: "Finance", accent: "border-l-amber-500", badge: "bg-amber-50 text-amber-700 border-amber-200", pillActive: "bg-amber-600 text-white" },
-      { name: "Social", accent: "border-l-cyan-500", badge: "bg-cyan-50 text-cyan-700 border-cyan-200", pillActive: "bg-cyan-600 text-white" },
-      { name: "Personal", accent: "border-l-violet-500", badge: "bg-violet-50 text-violet-700 border-violet-200", pillActive: "bg-violet-600 text-white" }
+    const BUILTIN_CATEGORIES = [
+      { name: "Work", accent: "border-l-blue-400", badge: "bg-blue-50 text-blue-700 border-blue-200/80", pillActive: "bg-blue-600 text-white" },
+      { name: "Study", accent: "border-l-indigo-400", badge: "bg-indigo-50 text-indigo-700 border-indigo-200/80", pillActive: "bg-indigo-600 text-white" },
+      { name: "Fitness", accent: "border-l-emerald-400", badge: "bg-emerald-50 text-emerald-700 border-emerald-200/80", pillActive: "bg-emerald-600 text-white" },
+      { name: "Break", accent: "border-l-orange-300", badge: "bg-orange-50 text-orange-800 border-orange-200/80", pillActive: "bg-orange-600 text-white" },
+      { name: "Creative", accent: "border-l-rose-300", badge: "bg-rose-50 text-rose-700 border-rose-200/80", pillActive: "bg-rose-600 text-white" },
+      { name: "Finance", accent: "border-l-amber-400", badge: "bg-amber-50 text-amber-800 border-amber-200/80", pillActive: "bg-amber-600 text-white" },
+      { name: "Social", accent: "border-l-sky-400", badge: "bg-sky-50 text-sky-700 border-sky-200/80", pillActive: "bg-sky-600 text-white" },
+      { name: "Personal", accent: "border-l-violet-400", badge: "bg-violet-50 text-violet-700 border-violet-200/80", pillActive: "bg-violet-600 text-white" }
     ];
 
-    const CATEGORY_MAP = Object.fromEntries(CATEGORY_LIST.map((c) => [c.name, c]));
+    const CUSTOM_PALETTE = [
+      { accent: "border-l-fuchsia-400", badge: "bg-fuchsia-50 text-fuchsia-800 border-fuchsia-200/80", pillActive: "bg-fuchsia-600 text-white" },
+      { accent: "border-l-red-400", badge: "bg-red-50 text-red-700 border-red-200/80", pillActive: "bg-red-600 text-white" },
+      { accent: "border-l-stone-400", badge: "bg-stone-100 text-stone-700 border-stone-300/80", pillActive: "bg-stone-700 text-white" },
+      { accent: "border-l-purple-400", badge: "bg-purple-50 text-purple-800 border-purple-200/80", pillActive: "bg-purple-600 text-white" },
+      { accent: "border-l-yellow-500", badge: "bg-yellow-50 text-yellow-800 border-yellow-200/80", pillActive: "bg-yellow-600 text-white" }
+    ];
 
     const SEQUENCE_LINES = [
-      "First task locked in—starting is half the battle.",
-      "Two down—you've got real momentum now.",
-      "Three in a row—staying locked in is paying off.",
-      "Keep that flow going—you're making solid progress.",
-      "Halfway or cruising—consistency always wins.",
-      "Another one checked off—your future self appreciates this.",
-      "Clean execution—keep stacking these wins.",
-      "Almost there—finish strong and protect your peace.",
+      "First task locked in. Starting is half the battle.",
+      "Two down. You've got real momentum now.",
+      "Three in a row. Staying locked in is paying off.",
+      "Keep that flow going. You're making solid progress.",
+      "Halfway or cruising, consistency always wins.",
+      "Another one checked off. Your future self appreciates this.",
+      "Clean execution. Keep stacking these wins.",
+      "Almost there. Finish strong and protect your peace.",
       "One step closer to clearing the board today.",
-      "Unstoppable energy—you're owning your schedule today."
+      "Unstoppable energy. You're owning your schedule today."
     ];
 
-    const PICK_TIPS = [
-      "Give this 10 focused minutes—starting is the hardest part.",
-      "Step-by-step beats multitasking—finish this one next.",
-      "Put distractions aside and knock out this item in sequence.",
-      "Stay in order and keep your momentum rolling."
+    const PLACEHOLDER_EXAMPLES = [
+      "What's on your list? (e.g. Lunch break)",
+      "What's on your list? (e.g. Finish project report)",
+      "What's on your list? (e.g. 20 min evening walk)",
+      "What's on your list? (e.g. Read 15 pages)",
+      "What's on your list? (e.g. Check monthly budget)",
+      "What's on your list? (e.g. 10 min tea break)",
+      "What's on your list? (e.g. Reply to important emails)",
+      "What's on your list? (e.g. Practice coding for 30 mins)"
     ];
 
-    // Common everyday quick wins besides the user's list
     const COMMON_QUICK_WINS = [
-      { name: "Drink a full glass of water", category: "Fitness" },
-      { name: "2-min desk or room tidy", category: "Personal" },
-      { name: "Stretch neck & shoulders", category: "Fitness" },
-      { name: "Reply to 1 pending message", category: "Social" },
-      { name: "Review tomorrow's top priority", category: "Work" },
-      { name: "Log today's expenses", category: "Finance" }
+      { name: "Drink a full glass of water", category: "Fitness", time: "" },
+      { name: "10 min tea or coffee break", category: "Break", time: "" },
+      { name: "2 min desk or room tidy", category: "Personal", time: "" },
+      { name: "Stretch neck & shoulders", category: "Fitness", time: "" },
+      { name: "Reply to 1 pending message", category: "Social", time: "" },
+      { name: "Log today's expenses", category: "Finance", time: "" },
+      { name: "Read 10 pages of a book", category: "Study", time: "" },
+      { name: "Plan tomorrow's top 3 tasks", category: "Work", time: "" },
+      { name: "Step outside for fresh air (5m)", category: "Break", time: "" },
+      { name: "Clear 5 unread emails", category: "Work", time: "" },
+      { name: "Write down 1 creative idea", category: "Creative", time: "" },
+      { name: "Check bank or bill due dates", category: "Finance", time: "" }
     ];
 
     const DEFAULT_TASKS = [
-      { id: 1, name: "Plan top 3 priorities", category: "Work", done: false },
-      { id: 2, name: "20-min workout, walk, or stretch", category: "Fitness", done: false },
-      { id: 3, name: "Check budget or save a receipt", category: "Finance", done: false }
+      { id: 1, name: "Plan top 3 priorities", category: "Work", time: "09:30", done: false, notifiedDate: "" },
+      { id: 2, name: "Lunch break", category: "Break", time: "14:00", done: false, notifiedDate: "" },
+      { id: 3, name: "20 min workout, walk, or stretch", category: "Fitness", time: "18:00", done: false, notifiedDate: "" }
     ];
 
-    function normalizeCategory(cat) {
-      if (cat === "Wellness") return "Fitness";
-      return CATEGORY_MAP[cat] ? cat : "Personal";
+    const PRESET_SECONDS = [300, 600, 900, 1500];
+
+    function formatShortDuration(secs) {
+      if (secs < 60) return `${secs}s`;
+      if (secs % 60 === 0) return `${secs / 60}m`;
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      return `${m}m ${s}s`;
     }
 
-    function normalizeTheme(themeKey) {
-      if (THEMES[themeKey]) return themeKey;
-      if (themeKey === "midnight") return "black";
-      return "bright";
+    function formatChipDuration(secs) {
+      if (secs < 60) return `${secs} sec`;
+      if (secs % 60 === 0) return `${secs / 60} min`;
+      return `${Math.floor(secs / 60)}m ${secs % 60}s`;
+    }
+
+    function getDateKey(dateObj = new Date()) {
+      return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
+    }
+
+    function dateFromKey(key) {
+      const [y, m, d] = key.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function daysBetweenKeys(oldKey, newKey) {
+      if (!oldKey || !newKey) return 0;
+      const [y1, m1, d1] = oldKey.split("-").map(Number);
+      const [y2, m2, d2] = newKey.split("-").map(Number);
+      const t1 = Date.UTC(y1, m1 - 1, d1);
+      const t2 = Date.UTC(y2, m2 - 1, d2);
+      return Math.round((t2 - t1) / 86400000);
+    }
+
+    function formatTime12h(hhmm) {
+      if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return "";
+      const [hStr, mStr] = hhmm.split(":");
+      let h = Number(hStr);
+      const ampm = h >= 12 ? "PM" : "AM";
+      h = h % 12 || 12;
+      return `${h}:${mStr} ${ampm}`;
+    }
+
+    function parse24hToParts(hhmm) {
+      if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) {
+        return { hour: "", min: "00", ampm: "PM" };
+      }
+      const [hStr, mStr] = hhmm.split(":");
+      const h24 = Number(hStr);
+      const ampm = h24 >= 12 ? "PM" : "AM";
+      const h12 = String(h24 % 12 || 12);
+      return { hour: h12, min: mStr, ampm };
+    }
+
+    function partsTo24h(hourStr, minStr, ampm) {
+      if (!hourStr) return "";
+      let h = Number(hourStr);
+      if (ampm === "AM") {
+        if (h === 12) h = 0;
+      } else {
+        if (h !== 12) h += 12;
+      }
+      return `${String(h).padStart(2, "0")}:${String(minStr || "00").padStart(2, "0")}`;
+    }
+
+    function populateTimeControls(hourSelect, minSelect, initialHHMM, ampmBtn, extraWrap) {
+      hourSelect.innerHTML = "";
+      const noneOpt = document.createElement("option");
+      noneOpt.value = "";
+      noneOpt.textContent = "No time";
+      hourSelect.appendChild(noneOpt);
+      for (let h = 1; h <= 12; h++) {
+        const opt = document.createElement("option");
+        opt.value = String(h);
+        opt.textContent = String(h);
+        hourSelect.appendChild(opt);
+      }
+
+      minSelect.innerHTML = "";
+      for (let m = 0; m < 60; m += 5) {
+        const val = String(m).padStart(2, "0");
+        const opt = document.createElement("option");
+        opt.value = val;
+        opt.textContent = val;
+        minSelect.appendChild(opt);
+      }
+
+      const parts = parse24hToParts(initialHHMM);
+      hourSelect.value = parts.hour;
+      if (parts.min && !Array.from(minSelect.options).some((o) => o.value === parts.min)) {
+        const customOpt = document.createElement("option");
+        customOpt.value = parts.min;
+        customOpt.textContent = parts.min;
+        minSelect.appendChild(customOpt);
+      }
+      minSelect.value = parts.min;
+      ampmBtn.textContent = parts.ampm;
+
+      const syncVisibility = () => {
+        const hasHour = Boolean(hourSelect.value);
+        extraWrap.classList.toggle("hidden", !hasHour);
+      };
+
+      hourSelect.onchange = syncVisibility;
+      ampmBtn.onclick = () => {
+        ampmBtn.textContent = ampmBtn.textContent === "AM" ? "PM" : "AM";
+      };
+      syncVisibility();
+    }
+
+    // Louder, clear 3-note chime via Web Audio API
+    function playTimerChime() {
+      if (!soundEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+
+        const playNote = (freq, startOffset, duration) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(freq, now + startOffset);
+          gain.gain.setValueAtTime(0.001, now + startOffset);
+          gain.gain.exponentialRampToValueAtTime(0.55, now + startOffset + 0.025);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + startOffset + duration);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + startOffset);
+          osc.stop(now + startOffset + duration);
+        };
+
+        playNote(587.33, 0, 0.38);    // D5
+        playNote(739.99, 0.14, 0.38); // F#5
+        playNote(880.0, 0.28, 0.65);  // A5
+      } catch {
+        // Ignore if audio is blocked
+      }
     }
 
     function loadState() {
@@ -362,12 +817,20 @@
           STORAGE_KEY,
           JSON.stringify({
             tasks,
+            customCategories,
+            customTimers,
+            history,
             nextId,
             streak,
             lastCompletedDate,
             lastActiveDate,
             activeFilter,
-            activeTheme
+            activeTheme,
+            notificationsEnabled,
+            soundEnabled,
+            confettiEnabled,
+            autoAdvanceEnabled,
+            focusDurationSeconds
           })
         );
       } catch {
@@ -375,58 +838,156 @@
       }
     }
 
-    function getTodayKey() {
-      const now = new Date();
-      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    // 1. Initialize state
+    const todayKey = getDateKey();
+    const saved = loadState();
+    let customCategories = Array.isArray(saved?.customCategories)
+      ? saved.customCategories.map((c, idx) => {
+          const pal = CUSTOM_PALETTE[idx % CUSTOM_PALETTE.length];
+          return {
+            name: c.name,
+            accent: c.accent?.includes("teal") ? pal.accent : c.accent || pal.accent,
+            badge: c.badge?.includes("teal") ? pal.badge : c.badge || pal.badge,
+            pillActive: c.pillActive?.includes("teal") ? pal.pillActive : c.pillActive || pal.pillActive
+          };
+        })
+      : [];
+    let customTimers = Array.isArray(saved?.customTimers)
+      ? saved.customTimers.filter((s) => typeof s === "number" && s >= 5 && s <= 10800)
+      : [30, 20, 10];
+    let history = saved?.history && typeof saved.history === "object" ? saved.history : {};
+    let nextId = typeof saved?.nextId === "number" ? saved.nextId : 4;
+    let streak = typeof saved?.streak === "number" ? saved.streak : 0;
+    let lastCompletedDate = typeof saved?.lastCompletedDate === "string" ? saved.lastCompletedDate : "";
+    let lastActiveDate = typeof saved?.lastActiveDate === "string" ? saved.lastActiveDate : todayKey;
+    let activeTheme = THEMES[saved?.activeTheme] ? saved.activeTheme : "bright";
+    let notificationsEnabled = Boolean(saved?.notificationsEnabled);
+    let soundEnabled = saved?.soundEnabled !== undefined ? Boolean(saved.soundEnabled) : true;
+    let confettiEnabled = saved?.confettiEnabled !== undefined ? Boolean(saved.confettiEnabled) : true;
+    let autoAdvanceEnabled = saved?.autoAdvanceEnabled !== undefined ? Boolean(saved.autoAdvanceEnabled) : true;
+    let focusDurationSeconds =
+      typeof saved?.focusDurationSeconds === "number" && saved.focusDurationSeconds >= 5 && saved.focusDurationSeconds <= 10800
+        ? saved.focusDurationSeconds
+        : 600;
+    let customTimerUnit = "sec";
+
+    function getAllCategories() {
+      return [...BUILTIN_CATEGORIES, ...customCategories];
     }
 
-    // 1. Initialize state
-    const todayKey = getTodayKey();
-    const saved = loadState();
+    function getCategoryMap() {
+      return Object.fromEntries(getAllCategories().map((c) => [c.name, c]));
+    }
+
+    function normalizeCategory(cat) {
+      if (cat === "Wellness") return "Fitness";
+      const map = getCategoryMap();
+      return map[cat] ? cat : "Personal";
+    }
+
     let tasks = Array.isArray(saved?.tasks)
       ? saved.tasks.map((t) => ({
           id: t.id,
           name: String(t.name || ""),
           category: normalizeCategory(t.category),
-          done: Boolean(t.done)
+          time: typeof t.time === "string" ? t.time : "",
+          done: Boolean(t.done),
+          notifiedDate: typeof t.notifiedDate === "string" ? t.notifiedDate : ""
         }))
       : DEFAULT_TASKS.map((t) => ({ ...t }));
-    let nextId = typeof saved?.nextId === "number" ? saved.nextId : 4;
-    let streak = typeof saved?.streak === "number" ? saved.streak : 0;
-    let lastCompletedDate = typeof saved?.lastCompletedDate === "string" ? saved.lastCompletedDate : "";
-    let lastActiveDate = typeof saved?.lastActiveDate === "string" ? saved.lastActiveDate : todayKey;
+
     let activeFilter =
       saved?.activeFilter === "All"
         ? "All"
-        : saved?.activeFilter === "Wellness"
-          ? "Fitness"
-          : CATEGORY_MAP[saved?.activeFilter]
-            ? saved.activeFilter
-            : "All";
-    let activeTheme = normalizeTheme(saved?.activeTheme);
+        : getCategoryMap()[normalizeCategory(saved?.activeFilter)] && saved?.activeFilter
+          ? normalizeCategory(saved.activeFilter)
+          : "All";
+
+    let currentPage = "home";
+    let selectedHistoryKey = todayKey;
     let editingId = null;
     let spotlightOpen = false;
     let spotlightId = null;
-    let spotlightTip = PICK_TIPS[0];
+    let ideasPage = 0;
+    let placeholderIdx = 0;
     let justCheckedId = null;
-
-    // Focus timer state (10 minutes = 600 seconds)
-    let timerSeconds = 600;
-    let timerInterval = null;
 
     if (lastActiveDate !== todayKey) {
       tasks.forEach((t) => {
         t.done = false;
+        t.notifiedDate = "";
       });
+      if (lastCompletedDate && daysBetweenKeys(lastCompletedDate, todayKey) > 1) {
+        streak = 0;
+      }
       lastActiveDate = todayKey;
+      saveState();
+    } else if (lastCompletedDate && daysBetweenKeys(lastCompletedDate, todayKey) > 1) {
+      streak = 0;
+      saveState();
     }
+
+    function syncTodayHistory() {
+      const completed = tasks.filter((t) => t.done).length;
+      const total = tasks.length;
+      history[getDateKey()] = {
+        completed,
+        total,
+        items: tasks.map((t) => ({ name: t.name, category: t.category, done: t.done }))
+      };
+    }
+    syncTodayHistory();
+
+    let timerSeconds = focusDurationSeconds;
+    let timerInterval = null;
 
     // 2. Grab HTML elements
     const pageBodyEl = document.getElementById("page-body");
     const appCardEl = document.getElementById("app-card");
+    const homeViewEl = document.getElementById("home-view");
+    const historyViewEl = document.getElementById("history-view");
+    const settingsViewEl = document.getElementById("settings-view");
+    const historyToggleBtn = document.getElementById("history-toggle-btn");
+    const historyBackBtn = document.getElementById("history-back-btn");
+    const historyDetailCardEl = document.getElementById("history-detail-card");
+    const historyDetailDateEl = document.getElementById("history-detail-date");
+    const historyDetailBadgeEl = document.getElementById("history-detail-badge");
+    const historyDetailItemsEl = document.getElementById("history-detail-items");
+    const weeklySummaryTextEl = document.getElementById("weekly-summary-text");
+    const weeklyHistoryGridEl = document.getElementById("weekly-history-grid");
+    const monthHistoryTitleEl = document.getElementById("month-history-title");
+    const monthlySummaryTextEl = document.getElementById("monthly-summary-text");
+    const monthlyStatsRowEl = document.getElementById("monthly-stats-row");
+    const monthlyCalendarGridEl = document.getElementById("monthly-calendar-grid");
+
+    const settingsToggleBtn = document.getElementById("settings-toggle-btn");
+    const settingsBackBtn = document.getElementById("settings-back-btn");
+    const settingsAlertRow = document.getElementById("settings-alert-row");
+    const settingsSoundRow = document.getElementById("settings-sound-row");
+    const settingsConfettiRow = document.getElementById("settings-confetti-row");
+    const settingsAutonextRow = document.getElementById("settings-autonext-row");
     const themeSwitcherEl = document.getElementById("theme-switcher");
+    const notifyToggleBtn = document.getElementById("notify-toggle-btn");
+    const soundToggleBtn = document.getElementById("sound-toggle-btn");
+    const confettiToggleBtn = document.getElementById("confetti-toggle-btn");
+    const autonextToggleBtn = document.getElementById("autonext-toggle-btn");
+    const timerDurationGroup = document.getElementById("timer-duration-group");
+    const customTimerStepper = document.getElementById("custom-timer-stepper");
+    const customTimerMinus = document.getElementById("custom-timer-minus");
+    const customTimerPlus = document.getElementById("custom-timer-plus");
+    const customTimerInput = document.getElementById("custom-timer-input");
+    const customTimerUnitBtn = document.getElementById("custom-timer-unit-btn");
+    const customTimerSaveBtn = document.getElementById("custom-timer-save-btn");
+    const settingsCatInput = document.getElementById("settings-cat-input");
+    const settingsAddCatBtn = document.getElementById("settings-add-cat-btn");
+    const settingsCustomCatsEl = document.getElementById("settings-custom-cats");
+    const exportDataBtn = document.getElementById("export-data-btn");
+    const resetAllBtn = document.getElementById("reset-all-btn");
+    const resetConfirmWrap = document.getElementById("reset-confirm-wrap");
+    const resetConfirmYes = document.getElementById("reset-confirm-yes");
+    const resetConfirmNo = document.getElementById("reset-confirm-no");
+
     const greetingTitleEl = document.getElementById("greeting-title");
-    const subtitleTextEl = document.getElementById("subtitle-text");
     const todayDateEl = document.getElementById("today-date");
     const streakBadgeEl = document.getElementById("streak-badge");
     const pickForMeBtn = document.getElementById("pick-for-me-btn");
@@ -439,22 +1000,33 @@
     const spotlightStepBadgeEl = document.getElementById("spotlight-step-badge");
     const spotlightCatEl = document.getElementById("spotlight-cat");
     const spotlightTaskNameEl = document.getElementById("spotlight-task-name");
-    const spotlightTipEl = document.getElementById("spotlight-tip");
     const spotlightCloseBtn = document.getElementById("spotlight-close-btn");
     const spotlightControlsEl = document.getElementById("spotlight-controls");
     const spotlightNextBtn = document.getElementById("spotlight-next-btn");
     const spotlightDoneBtn = document.getElementById("spotlight-done-btn");
     const focusTimerDisplayEl = document.getElementById("focus-timer-display");
+    const focusTimerMetaEl = document.getElementById("focus-timer-meta");
+    const focusTimerBarEl = document.getElementById("focus-timer-bar");
     const focusTimerToggleBtn = document.getElementById("focus-timer-toggle");
     const focusTimerResetBtn = document.getElementById("focus-timer-reset");
-    const commonWinsWrapEl = document.getElementById("common-wins-wrap");
     const commonWinsLabelEl = document.getElementById("common-wins-label");
+    const refreshIdeasBtn = document.getElementById("refresh-ideas-btn");
     const commonWinsListEl = document.getElementById("common-wins-list");
     const messageBoxEl = document.getElementById("message-box");
     const messageTextEl = document.getElementById("message-text");
     const addTaskForm = document.getElementById("add-task-form");
     const taskInput = document.getElementById("task-input");
+    const animatedPlaceholderEl = document.getElementById("animated-placeholder");
+    const addTimeGroup = document.getElementById("add-time-group");
+    const addHourSelect = document.getElementById("add-hour-select");
+    const addMinSelect = document.getElementById("add-min-select");
+    const addTimeExtra = document.getElementById("add-time-extra");
+    const addAmpmBtn = document.getElementById("add-ampm-btn");
     const categorySelect = document.getElementById("category-select");
+    const inlineCustomCat = document.getElementById("inline-custom-cat");
+    const inlineCustomCatInput = document.getElementById("inline-custom-cat-input");
+    const inlineCustomCatSave = document.getElementById("inline-custom-cat-save");
+    const inlineCustomCatCancel = document.getElementById("inline-custom-cat-cancel");
     const filterBarEl = document.getElementById("filter-bar");
     const taskListEl = document.getElementById("task-list");
     const appFooterEl = document.getElementById("app-footer");
@@ -462,13 +1034,64 @@
     const clearCompletedBtn = document.getElementById("clear-completed-btn");
     const resetBtn = document.getElementById("reset-btn");
 
-    // Populate category dropdown dynamically
-    CATEGORY_LIST.forEach((cat) => {
-      const opt = document.createElement("option");
-      opt.value = cat.name;
-      opt.textContent = cat.name;
-      categorySelect.appendChild(opt);
-    });
+    function addCustomCategory(rawName) {
+      const clean = rawName.trim();
+      if (!clean) return null;
+      const existing = getAllCategories().find((c) => c.name.toLowerCase() === clean.toLowerCase());
+      if (existing) return existing.name;
+      const palette = CUSTOM_PALETTE[customCategories.length % CUSTOM_PALETTE.length];
+      customCategories.push({
+        name: clean,
+        accent: palette.accent,
+        badge: palette.badge,
+        pillActive: palette.pillActive
+      });
+      saveState();
+      return clean;
+    }
+
+    function populateCategorySelect(selectedName) {
+      const prev = selectedName || categorySelect.value || "Work";
+      categorySelect.innerHTML = "";
+      getAllCategories().forEach((cat) => {
+        const opt = document.createElement("option");
+        opt.value = cat.name;
+        opt.textContent = cat.name;
+        categorySelect.appendChild(opt);
+      });
+      const customOpt = document.createElement("option");
+      customOpt.value = "__custom__";
+      customOpt.textContent = "+ Custom category...";
+      categorySelect.appendChild(customOpt);
+
+      if (getCategoryMap()[prev]) {
+        categorySelect.value = prev;
+      } else {
+        categorySelect.value = "Work";
+      }
+    }
+
+    populateTimeControls(addHourSelect, addMinSelect, "", addAmpmBtn, addTimeExtra);
+    populateCategorySelect("Work");
+
+    function syncPlaceholderVisibility() {
+      const shouldShow = taskInput.value.length === 0 && document.activeElement !== taskInput;
+      animatedPlaceholderEl.classList.toggle("hidden", !shouldShow);
+    }
+
+    setInterval(() => {
+      if (taskInput.value.length === 0 && document.activeElement !== taskInput) {
+        placeholderIdx = (placeholderIdx + 1) % PLACEHOLDER_EXAMPLES.length;
+        animatedPlaceholderEl.textContent = PLACEHOLDER_EXAMPLES[placeholderIdx];
+        animatedPlaceholderEl.classList.remove("animate-placeholder");
+        void animatedPlaceholderEl.offsetWidth;
+        animatedPlaceholderEl.classList.add("animate-placeholder");
+      }
+    }, 3000);
+
+    taskInput.addEventListener("focus", syncPlaceholderVisibility);
+    taskInput.addEventListener("blur", syncPlaceholderVisibility);
+    taskInput.addEventListener("input", syncPlaceholderVisibility);
 
     function formatTimer(secs) {
       const m = Math.floor(secs / 60);
@@ -476,19 +1099,378 @@
       return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
     }
 
+    function updateTimerUI() {
+      const total = Math.max(1, focusDurationSeconds);
+      const pct = Math.max(0, Math.min(100, Math.round((timerSeconds / total) * 100)));
+      const shortLabel = formatShortDuration(focusDurationSeconds);
+      focusTimerDisplayEl.textContent = formatTimer(timerSeconds);
+      focusTimerBarEl.style.width = `${pct}%`;
+
+      if (timerInterval) {
+        const endDate = new Date(Date.now() + timerSeconds * 1000);
+        const endStr = endDate.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: focusDurationSeconds < 60 ? "2-digit" : undefined });
+        focusTimerMetaEl.textContent = `left · ends ${endStr}`;
+        focusTimerToggleBtn.textContent = "Pause";
+      } else if (timerSeconds <= 0) {
+        focusTimerMetaEl.textContent = "completed!";
+        focusTimerToggleBtn.textContent = `Restart ${shortLabel}`;
+      } else if (timerSeconds < total) {
+        focusTimerMetaEl.textContent = "paused";
+        focusTimerToggleBtn.textContent = "Resume";
+      } else {
+        focusTimerMetaEl.textContent = `of ${shortLabel}`;
+        focusTimerToggleBtn.textContent = `Start ${shortLabel}`;
+      }
+    }
+
     function stopFocusTimer() {
       if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
       }
-      focusTimerToggleBtn.textContent = timerSeconds === 600 ? "Start 10m" : "Resume";
+      updateTimerUI();
     }
 
     function resetFocusTimer() {
       stopFocusTimer();
-      timerSeconds = 600;
-      focusTimerDisplayEl.textContent = formatTimer(timerSeconds);
-      focusTimerToggleBtn.textContent = "Start 10m";
+      timerSeconds = focusDurationSeconds;
+      updateTimerUI();
+    }
+
+    function renderSelectedHistoryDetail() {
+      const mode = THEMES[activeTheme].mode;
+      const selDate = dateFromKey(selectedHistoryKey);
+      const rec = history[selectedHistoryKey] || { completed: 0, total: 0, items: [] };
+      const pct = rec.total > 0 ? Math.round((rec.completed / rec.total) * 100) : 0;
+
+      historyDetailDateEl.textContent = selDate.toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+      historyDetailBadgeEl.textContent =
+        rec.total > 0 ? `${rec.completed}/${rec.total} (${pct}%)` : "No tasks logged";
+      historyDetailBadgeEl.className =
+        pct === 100
+          ? "text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500 text-white"
+          : mode === "black"
+            ? "text-xs font-semibold px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-200"
+            : "text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800";
+
+      historyDetailItemsEl.innerHTML = "";
+      if (Array.isArray(rec.items) && rec.items.length > 0) {
+        rec.items.forEach((item) => {
+          const li = document.createElement("li");
+          li.className = "flex items-center justify-between gap-2 py-0.5";
+          const left = document.createElement("span");
+          left.className = item.done ? "line-through opacity-70 truncate" : "font-medium truncate";
+          left.textContent = `${item.done ? "✓" : "○"} ${item.name}`;
+          const right = document.createElement("span");
+          right.className = "text-[11px] opacity-65 shrink-0";
+          right.textContent = item.category;
+          li.appendChild(left);
+          li.appendChild(right);
+          historyDetailItemsEl.appendChild(li);
+        });
+      } else {
+        const empty = document.createElement("li");
+        empty.className = "opacity-65";
+        empty.textContent = rec.total > 0
+          ? `${rec.completed} of ${rec.total} tasks completed on this day.`
+          : "No tasks recorded for this day.";
+        historyDetailItemsEl.appendChild(empty);
+      }
+    }
+
+    function renderHistoryPage() {
+      if (currentPage !== "history") return;
+      const mode = THEMES[activeTheme].mode;
+      const now = new Date();
+
+      renderSelectedHistoryDetail();
+
+      // 1. Recent 7 Days (Clickable buttons)
+      weeklyHistoryGridEl.innerHTML = "";
+      let weekCompleted = 0;
+
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        const key = getDateKey(d);
+        const rec = history[key] || { completed: 0, total: 0 };
+        weekCompleted += rec.completed;
+        const pct = rec.total > 0 ? Math.round((rec.completed / rec.total) * 100) : 0;
+        const isSelected = selectedHistoryKey === key;
+
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className =
+          mode === "black"
+            ? `rounded-xl p-2 border text-center transition-all ${isSelected ? "ring-2 ring-violet-500 border-violet-400 bg-zinc-800" : "border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800"}`
+            : mode === "eyecare"
+              ? `rounded-xl p-2 border text-center transition-all ${isSelected ? "ring-2 ring-[#5a8f69] border-[#5a8f69] bg-[#eef4eb]" : "border-[#dfd1b4] bg-[#f3ead8] hover:bg-[#eadec5]"}`
+              : `rounded-xl p-2 border text-center transition-all ${isSelected ? "ring-2 ring-indigo-500 border-indigo-400 bg-indigo-50" : "border-slate-200 bg-slate-50 hover:bg-slate-100"}`;
+
+        const dayLabel = document.createElement("p");
+        dayLabel.className = "text-[10px] font-bold uppercase opacity-70";
+        dayLabel.textContent = d.toLocaleDateString(undefined, { weekday: "short" });
+
+        const barTrack = document.createElement("div");
+        barTrack.className = "w-full h-14 bg-black/10 rounded-lg my-1.5 flex items-end overflow-hidden";
+        const barFill = document.createElement("div");
+        barFill.className = pct === 100 ? "w-full bg-emerald-500 rounded-t-md" : "w-full bg-indigo-500 rounded-t-md";
+        barFill.style.height = `${Math.max(pct > 0 ? 12 : 0, pct)}%`;
+        barTrack.appendChild(barFill);
+
+        const countLabel = document.createElement("p");
+        countLabel.className = "text-[11px] font-bold";
+        countLabel.textContent = rec.total > 0 ? `${rec.completed}/${rec.total}` : "0";
+
+        card.appendChild(dayLabel);
+        card.appendChild(barTrack);
+        card.appendChild(countLabel);
+        card.addEventListener("click", () => {
+          selectedHistoryKey = key;
+          renderHistoryPage();
+        });
+        weeklyHistoryGridEl.appendChild(card);
+      }
+
+      weeklySummaryTextEl.textContent = `${weekCompleted} tasks done`;
+
+      // 2. Monthly History (Clickable day buttons)
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const monthName = now.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+      monthHistoryTitleEl.textContent = `${monthName} History`;
+
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      let monthCompleted = 0;
+      let activeDays = 0;
+      let fullDays = 0;
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const key = getDateKey(new Date(year, month, day));
+        const rec = history[key];
+        if (rec && rec.completed > 0) {
+          monthCompleted += rec.completed;
+          activeDays += 1;
+          if (rec.total > 0 && rec.completed >= rec.total) {
+            fullDays += 1;
+          }
+        }
+      }
+
+      monthlySummaryTextEl.textContent = `${fullDays} perfect days`;
+
+      monthlyStatsRowEl.innerHTML = "";
+      const statItems = [
+        { label: "Completed", value: String(monthCompleted) },
+        { label: "Active Days", value: String(activeDays) },
+        { label: "Current Streak", value: `${streak}d` }
+      ];
+      statItems.forEach((st) => {
+        const box = document.createElement("div");
+        box.className =
+          mode === "black"
+            ? "rounded-xl p-2.5 border border-zinc-800 bg-zinc-900 text-center"
+            : mode === "eyecare"
+              ? "rounded-xl p-2.5 border border-[#dfd1b4] bg-[#f3ead8] text-center"
+              : "rounded-xl p-2.5 border border-slate-200 bg-slate-50 text-center";
+        const val = document.createElement("p");
+        val.className = "text-base font-extrabold";
+        val.textContent = st.value;
+        const lbl = document.createElement("p");
+        lbl.className = "text-[11px] font-medium opacity-70";
+        lbl.textContent = st.label;
+        box.appendChild(val);
+        box.appendChild(lbl);
+        monthlyStatsRowEl.appendChild(box);
+      });
+
+      monthlyCalendarGridEl.innerHTML = "";
+      for (let day = 1; day <= daysInMonth; day++) {
+        const key = getDateKey(new Date(year, month, day));
+        const rec = history[key] || { completed: 0, total: 0 };
+        const pct = rec.total > 0 ? Math.round((rec.completed / rec.total) * 100) : 0;
+        const isSelected = selectedHistoryKey === key;
+
+        const cell = document.createElement("button");
+        cell.type = "button";
+        let tone = "";
+        if (pct === 100) {
+          tone = "bg-emerald-500 text-white border-emerald-600";
+        } else if (rec.completed > 0) {
+          tone =
+            mode === "black"
+              ? "bg-indigo-900/70 text-indigo-100 border-indigo-500/50"
+              : "bg-indigo-100 text-indigo-900 border-indigo-200";
+        } else {
+          tone =
+            mode === "black"
+              ? "bg-zinc-900 text-zinc-400 border-zinc-800 hover:bg-zinc-800"
+              : mode === "eyecare"
+                ? "bg-[#f3ead8] text-[#6e624e] border-[#dfd1b4] hover:bg-[#eadec5]"
+                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100";
+        }
+        cell.className = `rounded-lg py-1.5 border text-center text-[11px] font-bold transition-all ${tone} ${isSelected ? "ring-2 ring-indigo-500 scale-105" : ""}`;
+        cell.title = `${monthName.split(" ")[0]} ${day}: ${rec.completed}/${rec.total} completed`;
+        cell.textContent = String(day);
+        cell.addEventListener("click", () => {
+          selectedHistoryKey = key;
+          renderHistoryPage();
+        });
+        monthlyCalendarGridEl.appendChild(cell);
+      }
+    }
+
+    function renderSettingsPage() {
+      if (currentPage !== "settings") return;
+      const mode = THEMES[activeTheme].mode;
+
+      themeSwitcherEl.innerHTML = "";
+      Object.entries(THEMES).forEach(([key, theme]) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        const selected = activeTheme === key;
+        btn.className = selected
+          ? "flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl text-xs font-bold border-2 border-indigo-500 bg-indigo-500/10 transition-all"
+          : mode === "black"
+            ? "flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl text-xs font-medium border border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 transition-all"
+            : mode === "eyecare"
+              ? "flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl text-xs font-medium border border-[#d6c4a0] bg-[#f3ead8] text-[#3d3528] transition-all"
+              : "flex items-center gap-1.5 px-2.5 py-2.5 rounded-xl text-xs font-medium border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-all";
+        const dot = document.createElement("span");
+        dot.className = `w-3.5 h-3.5 rounded-full shrink-0 ${theme.dot}`;
+        const label = document.createElement("span");
+        label.className = "truncate";
+        label.textContent = theme.name.split(" / ")[0];
+        btn.appendChild(dot);
+        btn.appendChild(label);
+        btn.addEventListener("click", () => {
+          activeTheme = key;
+          saveState();
+          render();
+        });
+        themeSwitcherEl.appendChild(btn);
+      });
+
+      timerDurationGroup.innerHTML = "";
+      PRESET_SECONDS.forEach((secs) => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        const active = focusDurationSeconds === secs;
+        chip.className = active
+          ? "px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white"
+          : mode === "black"
+            ? "px-3 py-1.5 rounded-xl text-xs font-medium bg-zinc-900 border border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+            : mode === "eyecare"
+              ? "px-3 py-1.5 rounded-xl text-xs font-medium bg-[#f3ead8] border border-[#d6c4a0] text-[#3d3528]"
+              : "px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200";
+        chip.textContent = formatChipDuration(secs);
+        chip.addEventListener("click", () => {
+          focusDurationSeconds = secs;
+          resetFocusTimer();
+          saveState();
+          render();
+        });
+        timerDurationGroup.appendChild(chip);
+      });
+
+      customTimers.forEach((secs) => {
+        const wrap = document.createElement("span");
+        const active = focusDurationSeconds === secs;
+        wrap.className = active
+          ? "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white"
+          : mode === "black"
+            ? "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-zinc-900 border border-zinc-700 text-zinc-200"
+            : mode === "eyecare"
+              ? "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-[#f3ead8] border border-[#d6c4a0] text-[#3d3528]"
+              : "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-medium bg-indigo-50 border border-indigo-200 text-indigo-800";
+
+        const pickBtn = document.createElement("button");
+        pickBtn.type = "button";
+        pickBtn.textContent = formatChipDuration(secs);
+        pickBtn.addEventListener("click", () => {
+          focusDurationSeconds = secs;
+          resetFocusTimer();
+          saveState();
+          render();
+        });
+
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "opacity-75 hover:opacity-100 font-bold leading-none";
+        delBtn.textContent = "×";
+        delBtn.title = `Remove ${formatChipDuration(secs)}`;
+        delBtn.addEventListener("click", () => {
+          customTimers = customTimers.filter((s) => s !== secs);
+          if (focusDurationSeconds === secs) {
+            focusDurationSeconds = 600;
+            resetFocusTimer();
+          }
+          saveState();
+          render();
+        });
+
+        wrap.appendChild(pickBtn);
+        wrap.appendChild(delBtn);
+        timerDurationGroup.appendChild(wrap);
+      });
+
+      customTimerUnitBtn.textContent = customTimerUnit;
+      customTimerInput.placeholder = customTimerUnit === "sec" ? "Seconds (e.g. 30, 20, 10)" : "Minutes (1 to 180)";
+
+      notifyToggleBtn.textContent = notificationsEnabled ? "On" : "Off";
+      notifyToggleBtn.className = notificationsEnabled
+        ? "text-xs font-bold px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white transition-colors"
+        : "text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300/60 opacity-80 transition-colors";
+
+      soundToggleBtn.textContent = soundEnabled ? "On" : "Off";
+      soundToggleBtn.className = soundEnabled
+        ? "text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-600 text-white"
+        : "text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300/60 opacity-80";
+
+      confettiToggleBtn.textContent = confettiEnabled ? "On" : "Off";
+      confettiToggleBtn.className = confettiEnabled
+        ? "text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-600 text-white"
+        : "text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300/60 opacity-80";
+
+      autonextToggleBtn.textContent = autoAdvanceEnabled ? "On" : "Off";
+      autonextToggleBtn.className = autoAdvanceEnabled
+        ? "text-xs font-bold px-3 py-1.5 rounded-lg bg-indigo-600 text-white"
+        : "text-xs font-semibold px-3 py-1.5 rounded-lg border border-slate-300/60 opacity-80";
+
+      settingsCustomCatsEl.innerHTML = "";
+      if (customCategories.length === 0) {
+        const empty = document.createElement("span");
+        empty.className = "text-xs opacity-60";
+        empty.textContent = "Your custom categories will appear here once added.";
+        settingsCustomCatsEl.appendChild(empty);
+      } else {
+        customCategories.forEach((cat) => {
+          const pill = document.createElement("span");
+          pill.className = `inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${cat.badge}`;
+          pill.textContent = cat.name;
+          const rm = document.createElement("button");
+          rm.type = "button";
+          rm.className = "hover:text-rose-600 font-bold leading-none";
+          rm.textContent = "×";
+          rm.title = `Delete ${cat.name}`;
+          rm.addEventListener("click", () => {
+            customCategories = customCategories.filter((c) => c.name !== cat.name);
+            tasks.forEach((t) => {
+              if (t.category === cat.name) t.category = "Personal";
+            });
+            if (activeFilter === cat.name) activeFilter = "All";
+            populateCategorySelect("Work");
+            saveState();
+            render();
+          });
+          pill.appendChild(rm);
+          settingsCustomCatsEl.appendChild(pill);
+        });
+      }
     }
 
     function applyTheme() {
@@ -500,104 +1482,129 @@
 
       if (mode === "black") {
         greetingTitleEl.className = "text-2xl font-extrabold tracking-tight text-white";
-        subtitleTextEl.className = "text-sm text-zinc-400 mt-0.5";
-        todayDateEl.className = "text-xs text-zinc-400 font-medium";
+        todayDateEl.className = "text-xs text-zinc-400 font-medium mr-1";
+        historyToggleBtn.className = "px-2.5 py-1 rounded-full text-xs font-semibold border border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white transition-colors";
+        historyBackBtn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 transition-colors";
+        historyDetailCardEl.className = "rounded-2xl p-3.5 border border-zinc-800 bg-zinc-900 space-y-2";
+        settingsToggleBtn.className = "px-2.5 py-1 rounded-full text-xs font-semibold border border-zinc-700 bg-zinc-900 text-zinc-300 hover:text-white transition-colors";
+        settingsBackBtn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 transition-colors";
+        settingsAlertRow.className = "flex items-center justify-between p-3 rounded-xl border border-zinc-800 bg-zinc-900";
+        settingsSoundRow.className = "flex items-center justify-between p-3 rounded-xl border border-zinc-800 bg-zinc-900";
+        settingsConfettiRow.className = "flex items-center justify-between p-3 rounded-xl border border-zinc-800 bg-zinc-900";
+        settingsAutonextRow.className = "flex items-center justify-between p-3 rounded-xl border border-zinc-800 bg-zinc-900";
+        customTimerStepper.className = "flex-1 min-w-[140px] flex items-center rounded-xl border border-zinc-700 bg-zinc-900 text-white overflow-hidden";
+        customTimerUnitBtn.className = "px-3 py-2 rounded-xl text-xs font-bold border border-zinc-700 bg-zinc-900 text-violet-300 hover:bg-zinc-800 transition-colors shrink-0";
+        settingsCatInput.className = "flex-1 min-w-0 px-3 py-2 text-xs rounded-xl border border-zinc-700 bg-zinc-900 text-white focus:outline-none";
+        exportDataBtn.className = "px-3 py-2 rounded-xl text-xs font-semibold border border-zinc-700 bg-zinc-900 text-zinc-200 hover:bg-zinc-800 transition-colors";
         progressCardEl.className = "mb-4 rounded-2xl p-4 bg-zinc-900 border border-zinc-800 transition-colors";
         progressLabelEl.className = "font-bold text-zinc-100";
         progressTextEl.className = "font-semibold text-violet-400";
         progressTrackEl.className = "w-full h-3 bg-zinc-800 rounded-full overflow-hidden p-0.5";
         spotlightCardEl.className = `${spotlightOpen ? "" : "hidden "}mb-4 rounded-2xl p-4 bg-zinc-900 border border-violet-500/40 animate-pop`;
-        spotlightTaskNameEl.className = "text-sm font-bold text-white truncate";
-        spotlightTipEl.className = "text-xs text-zinc-400 mt-0.5";
-        spotlightControlsEl.className = "flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-zinc-800";
-        focusTimerDisplayEl.className = "text-sm font-mono font-bold text-violet-300 bg-black px-2.5 py-1 rounded-lg border border-zinc-800";
-        focusTimerResetBtn.className = "px-2 py-1 rounded-lg text-xs font-medium text-zinc-400 hover:bg-zinc-800 transition-colors";
-        spotlightNextBtn.className = "px-2.5 py-1 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors";
-        commonWinsWrapEl.className = "mt-3 pt-2.5 border-t border-zinc-800";
-        commonWinsLabelEl.className = "text-[11px] font-semibold uppercase tracking-wider text-zinc-400 mb-1.5";
+        spotlightTaskNameEl.className = "text-base font-bold text-white leading-snug break-words";
+        spotlightControlsEl.className = "rounded-xl p-3 border border-zinc-800 bg-black/50 mb-3 space-y-2.5";
+        focusTimerDisplayEl.className = "text-xl font-mono font-extrabold tracking-tight text-violet-300";
+        focusTimerResetBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-zinc-700 bg-zinc-900 text-zinc-300 hover:bg-zinc-800 transition-colors";
+        spotlightNextBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 transition-colors";
+        commonWinsLabelEl.className = "text-[11px] font-semibold uppercase tracking-wider text-zinc-400";
+        refreshIdeasBtn.className = "text-[11px] font-semibold text-violet-400 hover:underline";
         messageBoxEl.className = "mb-5 rounded-2xl px-4 py-3 bg-violet-500/10 border border-violet-500/30 transition-all";
         messageTextEl.className = "text-sm font-semibold leading-snug text-violet-100";
-        taskInput.className = "flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-zinc-800 bg-zinc-900 text-white placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-400 transition-all";
-        categorySelect.className = "px-3 py-2.5 text-sm font-semibold text-zinc-100 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition-all";
+        taskInput.className = "w-full px-3.5 py-2.5 text-sm rounded-xl border border-zinc-800 bg-zinc-900 text-white focus:outline-none focus:ring-2 focus:ring-violet-500/40 focus:border-violet-400 transition-all";
+        animatedPlaceholderEl.className = `pointer-events-none absolute inset-y-0 left-3.5 right-3 flex items-center text-sm text-zinc-500 truncate ${taskInput.value.length === 0 && document.activeElement !== taskInput ? "" : "hidden"}`;
+        addTimeGroup.className = "inline-flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-100 px-2.5 py-1.5 transition-all";
+        addAmpmBtn.className = "ml-0.5 px-2 py-0.5 rounded-md text-[11px] font-bold bg-violet-600 text-white hover:bg-violet-500 transition-colors";
+        categorySelect.className = "px-3 py-1.5 text-xs font-semibold text-zinc-100 rounded-xl border border-zinc-800 bg-zinc-900 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-violet-500/40 transition-all cursor-pointer";
+        inlineCustomCatInput.className = "w-32 px-2.5 py-1.5 text-xs rounded-xl border border-violet-400 bg-zinc-900 text-white focus:outline-none";
         appFooterEl.className = "mt-6 pt-4 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-2";
         remainingTextEl.className = "text-xs font-semibold text-zinc-400";
-        themeSwitcherEl.className = "flex items-center gap-1.5 bg-zinc-900 px-2 py-1 rounded-full border border-zinc-800";
       } else if (mode === "eyecare") {
         greetingTitleEl.className = "text-2xl font-extrabold tracking-tight text-[#2f281d]";
-        subtitleTextEl.className = "text-sm text-[#6e624e] mt-0.5";
-        todayDateEl.className = "text-xs text-[#6e624e] font-medium";
+        todayDateEl.className = "text-xs text-[#6e624e] font-medium mr-1";
+        historyToggleBtn.className = "px-2.5 py-1 rounded-full text-xs font-semibold border border-[#d6c4a0] bg-[#f3ead8] text-[#4e4332] hover:text-[#2f281d] transition-colors";
+        historyBackBtn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-[#d6c4a0] bg-[#f3ead8] text-[#3d3528] hover:bg-[#eadec5] transition-colors";
+        historyDetailCardEl.className = "rounded-2xl p-3.5 border border-[#dfd1b4] bg-[#f3ead8] space-y-2";
+        settingsToggleBtn.className = "px-2.5 py-1 rounded-full text-xs font-semibold border border-[#d6c4a0] bg-[#f3ead8] text-[#4e4332] hover:text-[#2f281d] transition-colors";
+        settingsBackBtn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-[#d6c4a0] bg-[#f3ead8] text-[#3d3528] hover:bg-[#eadec5] transition-colors";
+        settingsAlertRow.className = "flex items-center justify-between p-3 rounded-xl border border-[#dfd1b4] bg-[#f3ead8]";
+        settingsSoundRow.className = "flex items-center justify-between p-3 rounded-xl border border-[#dfd1b4] bg-[#f3ead8]";
+        settingsConfettiRow.className = "flex items-center justify-between p-3 rounded-xl border border-[#dfd1b4] bg-[#f3ead8]";
+        settingsAutonextRow.className = "flex items-center justify-between p-3 rounded-xl border border-[#dfd1b4] bg-[#f3ead8]";
+        customTimerStepper.className = "flex-1 min-w-[140px] flex items-center rounded-xl border border-[#d6c4a0] bg-[#fffcf5] text-[#2f281d] overflow-hidden";
+        customTimerUnitBtn.className = "px-3 py-2 rounded-xl text-xs font-bold border border-[#d6c4a0] bg-[#f3ead8] text-[#476f53] hover:bg-[#eadec5] transition-colors shrink-0";
+        settingsCatInput.className = "flex-1 min-w-0 px-3 py-2 text-xs rounded-xl border border-[#d6c4a0] bg-[#fffcf5] text-[#2f281d] focus:outline-none";
+        exportDataBtn.className = "px-3 py-2 rounded-xl text-xs font-semibold border border-[#d6c4a0] bg-[#f3ead8] text-[#3d3528] hover:bg-[#eadec5] transition-colors";
         progressCardEl.className = "mb-4 rounded-2xl p-4 bg-[#f3ead8] border border-[#dfd1b4] transition-colors";
         progressLabelEl.className = "font-bold text-[#3d3528]";
         progressTextEl.className = "font-semibold text-[#476f53]";
         progressTrackEl.className = "w-full h-3 bg-[#e4d7be] rounded-full overflow-hidden p-0.5";
         spotlightCardEl.className = `${spotlightOpen ? "" : "hidden "}mb-4 rounded-2xl p-4 bg-[#f5eddc] border border-[#d6c4a0] animate-pop`;
-        spotlightTaskNameEl.className = "text-sm font-bold text-[#2f281d] truncate";
-        spotlightTipEl.className = "text-xs text-[#6e624e] mt-0.5";
-        spotlightControlsEl.className = "flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-[#e2d4b8]";
-        focusTimerDisplayEl.className = "text-sm font-mono font-bold text-[#3d3528] bg-[#fbf6ec] px-2.5 py-1 rounded-lg border border-[#dfd1b4]";
-        focusTimerResetBtn.className = "px-2 py-1 rounded-lg text-xs font-medium text-[#6e624e] hover:bg-[#eadec5] transition-colors";
-        spotlightNextBtn.className = "px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#fbf6ec] hover:bg-[#f0e4cd] text-[#3d3528] border border-[#d6c4a0] transition-colors";
-        commonWinsWrapEl.className = "mt-3 pt-2.5 border-t border-[#e2d4b8]";
-        commonWinsLabelEl.className = "text-[11px] font-semibold uppercase tracking-wider text-[#6e624e] mb-1.5";
+        spotlightTaskNameEl.className = "text-base font-bold text-[#2f281d] leading-snug break-words";
+        spotlightControlsEl.className = "rounded-xl p-3 border border-[#dfd1b4] bg-[#fbf6ec] mb-3 space-y-2.5";
+        focusTimerDisplayEl.className = "text-xl font-mono font-extrabold tracking-tight text-[#2f281d]";
+        focusTimerResetBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-[#d6c4a0] bg-[#f3ead8] text-[#3d3528] hover:bg-[#eadec5] transition-colors";
+        spotlightNextBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#fbf6ec] hover:bg-[#f0e4cd] text-[#3d3528] border border-[#d6c4a0] transition-colors";
+        commonWinsLabelEl.className = "text-[11px] font-semibold uppercase tracking-wider text-[#6e624e]";
+        refreshIdeasBtn.className = "text-[11px] font-semibold text-[#476f53] hover:underline";
         messageBoxEl.className = "mb-5 rounded-2xl px-4 py-3 bg-[#eef4eb] border border-[#c7d9c1] transition-all";
         messageTextEl.className = "text-sm font-semibold leading-snug text-[#2e4a36]";
-        taskInput.className = "flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-[#dfd1b4] bg-[#fffcf5] text-[#2f281d] placeholder:text-[#9c8e76] focus:outline-none focus:ring-2 focus:ring-[#5a8f69]/30 focus:border-[#5a8f69] transition-all";
-        categorySelect.className = "px-3 py-2.5 text-sm font-semibold text-[#3d3528] rounded-xl border border-[#dfd1b4] bg-[#f3ead8] hover:bg-[#eadec5] focus:outline-none focus:ring-2 focus:ring-[#5a8f69]/30 transition-all";
+        taskInput.className = "w-full px-3.5 py-2.5 text-sm rounded-xl border border-[#dfd1b4] bg-[#fffcf5] text-[#2f281d] focus:outline-none focus:ring-2 focus:ring-[#5a8f69]/30 focus:border-[#5a8f69] transition-all";
+        animatedPlaceholderEl.className = `pointer-events-none absolute inset-y-0 left-3.5 right-3 flex items-center text-sm text-[#9c8e76] truncate ${taskInput.value.length === 0 && document.activeElement !== taskInput ? "" : "hidden"}`;
+        addTimeGroup.className = "inline-flex items-center gap-1 rounded-xl border border-[#dfd1b4] bg-[#f3ead8] text-[#3d3528] px-2.5 py-1.5 transition-all";
+        addAmpmBtn.className = "ml-0.5 px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#5a8f69] text-white hover:bg-[#497a57] transition-colors";
+        categorySelect.className = "px-3 py-1.5 text-xs font-semibold text-[#3d3528] rounded-xl border border-[#dfd1b4] bg-[#f3ead8] hover:bg-[#eadec5] focus:outline-none focus:ring-2 focus:ring-[#5a8f69]/30 transition-all cursor-pointer";
+        inlineCustomCatInput.className = "w-32 px-2.5 py-1.5 text-xs rounded-xl border border-[#5a8f69] bg-[#fffcf5] text-[#2f281d] focus:outline-none";
         appFooterEl.className = "mt-6 pt-4 border-t border-[#e4d7be] flex flex-wrap items-center justify-between gap-2";
         remainingTextEl.className = "text-xs font-semibold text-[#6e624e]";
-        themeSwitcherEl.className = "flex items-center gap-1.5 bg-[#f3ead8] px-2 py-1 rounded-full border border-[#dfd1b4]";
       } else {
         greetingTitleEl.className = "text-2xl font-extrabold tracking-tight text-slate-900";
-        subtitleTextEl.className = "text-sm text-slate-500 mt-0.5";
-        todayDateEl.className = "text-xs text-slate-500 font-medium";
+        todayDateEl.className = "text-xs text-slate-500 font-medium mr-1";
+        historyToggleBtn.className = "px-2.5 py-1 rounded-full text-xs font-semibold border border-slate-200 bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors";
+        historyBackBtn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors";
+        historyDetailCardEl.className = "rounded-2xl p-3.5 border border-slate-200 bg-slate-50 space-y-2";
+        settingsToggleBtn.className = "px-2.5 py-1 rounded-full text-xs font-semibold border border-slate-200 bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors";
+        settingsBackBtn.className = "px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors";
+        settingsAlertRow.className = "flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50";
+        settingsSoundRow.className = "flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50";
+        settingsConfettiRow.className = "flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50";
+        settingsAutonextRow.className = "flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-slate-50";
+        customTimerStepper.className = "flex-1 min-w-[140px] flex items-center rounded-xl border border-slate-200 bg-white text-slate-900 overflow-hidden";
+        customTimerUnitBtn.className = "px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-slate-50 text-indigo-700 hover:bg-slate-100 transition-colors shrink-0";
+        settingsCatInput.className = "flex-1 min-w-0 px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none";
+        exportDataBtn.className = "px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors";
         progressCardEl.className = "mb-4 rounded-2xl p-4 bg-slate-50 border border-slate-200/80 transition-colors";
         progressLabelEl.className = "font-bold text-slate-800";
         progressTextEl.className = "font-semibold text-indigo-700";
         progressTrackEl.className = "w-full h-3 bg-slate-200/80 rounded-full overflow-hidden p-0.5";
         spotlightCardEl.className = `${spotlightOpen ? "" : "hidden "}mb-4 rounded-2xl p-4 bg-indigo-50/70 border border-indigo-200 animate-pop`;
-        spotlightTaskNameEl.className = "text-sm font-bold text-slate-900 truncate";
-        spotlightTipEl.className = "text-xs text-slate-600 mt-0.5";
-        spotlightControlsEl.className = "flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-indigo-200/60";
-        focusTimerDisplayEl.className = "text-sm font-mono font-bold text-indigo-800 bg-white px-2.5 py-1 rounded-lg border border-indigo-200/70";
-        focusTimerResetBtn.className = "px-2 py-1 rounded-lg text-xs font-medium text-slate-600 hover:bg-white/70 transition-colors";
-        spotlightNextBtn.className = "px-2.5 py-1 rounded-lg text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-colors";
-        commonWinsWrapEl.className = "mt-3 pt-2.5 border-t border-indigo-200/60";
-        commonWinsLabelEl.className = "text-[11px] font-semibold uppercase tracking-wider text-indigo-700/80 mb-1.5";
+        spotlightTaskNameEl.className = "text-base font-bold text-slate-900 leading-snug break-words";
+        spotlightControlsEl.className = "rounded-xl p-3 border border-indigo-200/80 bg-white mb-3 space-y-2.5";
+        focusTimerDisplayEl.className = "text-xl font-mono font-extrabold tracking-tight text-indigo-900";
+        focusTimerResetBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors";
+        spotlightNextBtn.className = "px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-colors";
+        commonWinsLabelEl.className = "text-[11px] font-semibold uppercase tracking-wider text-indigo-700/80";
+        refreshIdeasBtn.className = "text-[11px] font-semibold text-indigo-600 hover:underline";
         messageBoxEl.className = "mb-5 rounded-2xl px-4 py-3 bg-indigo-50/70 border border-indigo-200/80 transition-all";
         messageTextEl.className = "text-sm font-semibold leading-snug text-indigo-950";
-        taskInput.className = "flex-1 min-w-0 px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all";
-        categorySelect.className = "px-3 py-2.5 text-sm font-semibold text-slate-700 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all";
+        taskInput.className = "w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all";
+        animatedPlaceholderEl.className = `pointer-events-none absolute inset-y-0 left-3.5 right-3 flex items-center text-sm text-slate-400 truncate ${taskInput.value.length === 0 && document.activeElement !== taskInput ? "" : "hidden"}`;
+        addTimeGroup.className = "inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 px-2.5 py-1.5 transition-all";
+        addAmpmBtn.className = "ml-0.5 px-2 py-0.5 rounded-md text-[11px] font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors";
+        categorySelect.className = "px-3 py-1.5 text-xs font-semibold text-slate-700 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all cursor-pointer";
+        inlineCustomCatInput.className = "w-32 px-2.5 py-1.5 text-xs rounded-xl border border-indigo-400 bg-white text-slate-900 focus:outline-none";
         appFooterEl.className = "mt-6 pt-4 border-t border-slate-200/70 flex flex-wrap items-center justify-between gap-2";
         remainingTextEl.className = "text-xs font-semibold text-slate-500";
-        themeSwitcherEl.className = "flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-full border border-slate-200";
       }
-
-      // Render 3 theme dots on the right side of streak
-      themeSwitcherEl.innerHTML = "";
-      Object.entries(THEMES).forEach(([key, theme]) => {
-        const dot = document.createElement("button");
-        dot.type = "button";
-        const selected = activeTheme === key;
-        dot.className = selected
-          ? `w-4 h-4 rounded-full ${theme.dot} ring-2 ring-offset-1 ring-indigo-500 scale-110 transition-transform`
-          : `w-4 h-4 rounded-full ${theme.dot} opacity-75 hover:opacity-100 hover:scale-110 transition-all`;
-        dot.title = theme.name;
-        dot.setAttribute("aria-label", `Switch to ${theme.name} theme`);
-        dot.addEventListener("click", () => {
-          activeTheme = key;
-          saveState();
-          render();
-        });
-        themeSwitcherEl.appendChild(dot);
-      });
     }
 
     function updateDynamicClock() {
       const now = new Date();
       const hour = now.getHours();
-      let greeting = "Good evening";
-      if (hour < 12) greeting = "Good morning";
-      else if (hour < 17) greeting = "Good afternoon";
+      let greeting = "Midnight";
+      if (hour >= 5 && hour < 12) greeting = "Good morning";
+      else if (hour >= 12 && hour < 17) greeting = "Good afternoon";
+      else if (hour >= 17 && hour < 21) greeting = "Good evening";
+      else if (hour >= 21) greeting = "Good night";
 
       greetingTitleEl.textContent = `${greeting} · Task Tracker`;
       todayDateEl.textContent = now.toLocaleDateString(undefined, {
@@ -608,8 +1615,12 @@
       });
     }
 
-    function showSequenceMessage(taskIndex) {
-      const line = SEQUENCE_LINES[taskIndex % SEQUENCE_LINES.length];
+    function showCompletionMessage(completedCount) {
+      if (completedCount <= 0) {
+        messageTextEl.textContent = "Complete today's list to earn your 1-day streak.";
+        return;
+      }
+      const line = SEQUENCE_LINES[(completedCount - 1) % SEQUENCE_LINES.length];
       messageTextEl.textContent = line;
       messageBoxEl.classList.remove("animate-pop");
       void messageBoxEl.offsetWidth;
@@ -617,7 +1628,7 @@
     }
 
     function miniBurst() {
-      if (typeof confetti === "function") {
+      if (confettiEnabled && typeof confetti === "function") {
         confetti({
           particleCount: 18,
           spread: 45,
@@ -628,7 +1639,7 @@
     }
 
     function celebrateAllDone() {
-      if (typeof confetti === "function") {
+      if (confettiEnabled && typeof confetti === "function") {
         confetti({
           particleCount: 85,
           spread: 75,
@@ -639,11 +1650,41 @@
 
     function updateStreakIfAllDone() {
       const allDone = tasks.length > 0 && tasks.every((t) => t.done);
-      const currentKey = getTodayKey();
+      const currentKey = getDateKey();
       if (allDone && lastCompletedDate !== currentKey) {
         streak += 1;
         lastCompletedDate = currentKey;
       }
+    }
+
+    function checkScheduledNotifications() {
+      if (!notificationsEnabled) return;
+      const now = new Date();
+      const currentKey = getDateKey(now);
+      const currentHHMM = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+      let changed = false;
+      tasks.forEach((task) => {
+        if (!task.done && task.time && task.time === currentHHMM && task.notifiedDate !== currentKey) {
+          task.notifiedDate = currentKey;
+          changed = true;
+          const timeLabel = formatTime12h(task.time);
+          messageTextEl.textContent = `Reminder (${timeLabel}): ${task.name} is still pending.`;
+
+          if ("Notification" in window && Notification.permission === "granted") {
+            try {
+              new Notification(`Pending at ${timeLabel}`, {
+                body: `Time for: ${task.name}`,
+                tag: `task-${task.id}-${currentKey}`
+              });
+            } catch {
+              // Ignore
+            }
+          }
+        }
+      });
+
+      if (changed) saveState();
     }
 
     function pickNextInSequence(advanceFromCurrent) {
@@ -664,8 +1705,6 @@
         spotlightId = pending[nextIdx].id;
       }
 
-      const fullIdx = tasks.findIndex((t) => t.id === spotlightId);
-      spotlightTip = PICK_TIPS[fullIdx % PICK_TIPS.length];
       activeFilter = "All";
       resetFocusTimer();
       render();
@@ -679,26 +1718,33 @@
       const wasDone = task.done;
       task.done = !task.done;
 
+      const completedNow = tasks.filter((t) => t.done).length;
+
       if (!wasDone && task.done) {
         justCheckedId = task.id;
-        showSequenceMessage(idx);
+        showCompletionMessage(completedNow);
         const isAllDoneNow = tasks.length > 0 && tasks.every((t) => t.done);
         if (!wasAllDone && isAllDoneNow) {
           celebrateAllDone();
         } else {
           miniBurst();
         }
-        // Automatically advance spotlight to the next uncompleted task in sequence if spotlight was open
         if (spotlightOpen && spotlightId === task.id) {
-          const nextPending = tasks.find((t) => !t.done);
-          spotlightId = nextPending ? nextPending.id : null;
+          if (autoAdvanceEnabled) {
+            const nextPending = tasks.find((t) => !t.done);
+            spotlightId = nextPending ? nextPending.id : null;
+          } else {
+            spotlightId = null;
+          }
           resetFocusTimer();
         }
       } else {
         justCheckedId = null;
+        showCompletionMessage(completedNow);
       }
 
       updateStreakIfAllDone();
+      syncTodayHistory();
       saveState();
       render();
     }
@@ -729,38 +1775,41 @@
         }
       }
 
+      const catMap = getCategoryMap();
       const activePicked = tasks.find((t) => t.id === spotlightId && !t.done);
       if (!activePicked) {
         spotlightStepBadgeEl.textContent = "All Clear";
         spotlightCatEl.className = "hidden";
-        spotlightTaskNameEl.textContent = "Your list is clear—pick a quick common win below or add a new task!";
-        spotlightTipEl.textContent = "Great job staying on top of your day.";
+        spotlightTaskNameEl.textContent = "Your list is clear. Quick add a task below or create your own.";
         spotlightControlsEl.classList.add("hidden");
       } else {
         const seqNum = tasks.findIndex((t) => t.id === activePicked.id) + 1;
-        const catMeta = CATEGORY_MAP[activePicked.category] || CATEGORY_MAP.Personal;
-        spotlightStepBadgeEl.textContent = `Step #${seqNum} in Sequence`;
+        const catMeta = catMap[activePicked.category] || catMap.Personal;
+        spotlightStepBadgeEl.textContent = `Focus #${seqNum}`;
         spotlightCatEl.className = `text-[11px] font-semibold px-2 py-0.5 rounded-md border ${catMeta.badge}`;
         spotlightCatEl.textContent = activePicked.category;
-        spotlightTaskNameEl.textContent = activePicked.name;
-        spotlightTipEl.textContent = spotlightTip;
+        spotlightTaskNameEl.textContent = activePicked.time
+          ? `${activePicked.name} · ${formatTime12h(activePicked.time)}`
+          : activePicked.name;
         spotlightControlsEl.classList.remove("hidden");
-        focusTimerDisplayEl.textContent = formatTimer(timerSeconds);
+        updateTimerUI();
       }
 
-      // Render common quick wins (exclude ones already in today's list)
       const mode = THEMES[activeTheme].mode;
       commonWinsListEl.innerHTML = "";
       const existingNames = new Set(tasks.map((t) => t.name.toLowerCase()));
-      const suggestions = COMMON_QUICK_WINS.filter((item) => !existingNames.has(item.name.toLowerCase())).slice(0, 4);
+      const available = COMMON_QUICK_WINS.filter((item) => !existingNames.has(item.name.toLowerCase()));
 
-      if (suggestions.length === 0) {
+      if (available.length === 0) {
         const note = document.createElement("span");
-        note.className = "text-xs text-slate-400";
-        note.textContent = "All quick wins are already on your list!";
+        note.className = "text-xs opacity-60";
+        note.textContent = "All quick add ideas are already on your list!";
         commonWinsListEl.appendChild(note);
       } else {
-        suggestions.forEach((item) => {
+        const perPage = 6;
+        const start = (ideasPage * perPage) % available.length;
+        const rotated = [...available.slice(start), ...available.slice(0, start)].slice(0, perPage);
+        rotated.forEach((item) => {
           const chip = document.createElement("button");
           chip.type = "button";
           chip.className =
@@ -775,10 +1824,13 @@
               id: nextId++,
               name: item.name,
               category: item.category,
-              done: false
+              time: item.time || "",
+              done: false,
+              notifiedDate: ""
             };
             tasks.push(newTask);
             if (!spotlightId) spotlightId = newTask.id;
+            syncTodayHistory();
             saveState();
             render();
           });
@@ -789,8 +1841,9 @@
 
     function renderFilters() {
       const mode = THEMES[activeTheme].mode;
+      const catMap = getCategoryMap();
       filterBarEl.innerHTML = "";
-      const filterNames = ["All", ...CATEGORY_LIST.map((c) => c.name)];
+      const filterNames = ["All", ...getAllCategories().map((c) => c.name)];
 
       filterNames.forEach((filterName) => {
         const count =
@@ -807,7 +1860,7 @@
               ? mode === "black"
                 ? "bg-white text-black"
                 : "bg-slate-900 text-white"
-              : CATEGORY_MAP[filterName].pillActive;
+              : catMap[filterName].pillActive;
           btn.className = `px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${activeClass}`;
         } else {
           btn.className =
@@ -832,13 +1885,20 @@
 
     // 3. Main Render
     function render() {
+      homeViewEl.classList.toggle("hidden", currentPage !== "home");
+      historyViewEl.classList.toggle("hidden", currentPage !== "history");
+      settingsViewEl.classList.toggle("hidden", currentPage !== "settings");
+
       applyTheme();
+      renderHistoryPage();
+      renderSettingsPage();
       updateDynamicClock();
       renderSpotlight();
       renderFilters();
       taskListEl.innerHTML = "";
 
       const mode = THEMES[activeTheme].mode;
+      const catMap = getCategoryMap();
       const visibleTasks =
         activeFilter === "All"
           ? tasks
@@ -854,13 +1914,13 @@
               : "text-center text-sm text-slate-400 py-7 border border-dashed border-slate-200 rounded-2xl";
         emptyItem.textContent =
           activeFilter === "All"
-            ? "No tasks yet—add one above or open Pick for me."
+            ? "No tasks yet. Add one above or open Focus Mode."
             : `No ${activeFilter} tasks yet.`;
         taskListEl.appendChild(emptyItem);
       } else {
         visibleTasks.forEach((task) => {
           const fullIndex = tasks.findIndex((t) => t.id === task.id);
-          const catMeta = CATEGORY_MAP[task.category] || CATEGORY_MAP.Personal;
+          const catMeta = catMap[task.category] || catMap.Personal;
           const isSpotlight = spotlightOpen && spotlightId === task.id;
 
           const li = document.createElement("li");
@@ -883,24 +1943,64 @@
           li.className = `flex items-center gap-2 p-2.5 rounded-2xl border border-l-4 ${catMeta.accent} ${baseCard} transition-all duration-200 ${isSpotlight ? "spotlight-ring ring-2 ring-indigo-500" : ""}`;
 
           if (editingId === task.id) {
-            const editForm = document.createElement("form");
-            editForm.className = "flex-1 flex flex-wrap sm:flex-nowrap items-center gap-2 min-w-0";
+            li.className = `p-3 rounded-2xl border border-l-4 ${catMeta.accent} ${baseCard} transition-all`;
 
-            const editInput = document.createElement("input");
-            editInput.type = "text";
-            editInput.value = task.name;
-            editInput.maxLength = 80;
-            editInput.className =
+            const editForm = document.createElement("form");
+            editForm.className = "w-full space-y-2.5";
+
+            const editTextarea = document.createElement("textarea");
+            editTextarea.rows = 2;
+            editTextarea.maxLength = 120;
+            editTextarea.value = task.name;
+            editTextarea.className =
               mode === "black"
-                ? "flex-1 min-w-0 px-2.5 py-1.5 text-sm rounded-lg border border-violet-400 bg-black text-white focus:outline-none"
-                : "flex-1 min-w-0 px-2.5 py-1.5 text-sm rounded-lg border border-indigo-400 bg-white text-slate-900 focus:outline-none";
+                ? "w-full px-3 py-2 text-sm leading-relaxed rounded-xl border border-violet-400 bg-black text-white resize-y focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                : mode === "eyecare"
+                  ? "w-full px-3 py-2 text-sm leading-relaxed rounded-xl border border-[#5a8f69] bg-[#fffcf5] text-[#2f281d] resize-y focus:outline-none focus:ring-2 focus:ring-[#5a8f69]/30"
+                  : "w-full px-3 py-2 text-sm leading-relaxed rounded-xl border border-indigo-400 bg-white text-slate-900 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500/25";
+
+            const editControlsRow = document.createElement("div");
+            editControlsRow.className = "flex flex-wrap items-center justify-between gap-2";
+
+            const leftPickers = document.createElement("div");
+            leftPickers.className = "flex flex-wrap items-center gap-1.5";
+
+            const editTimeGroup = document.createElement("div");
+            editTimeGroup.className =
+              mode === "black"
+                ? "inline-flex items-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-100 px-2 py-1"
+                : mode === "eyecare"
+                  ? "inline-flex items-center gap-1 rounded-lg border border-[#dfd1b4] bg-[#f3ead8] text-[#3d3528] px-2 py-1"
+                  : "inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 px-2 py-1";
+
+            const editHour = document.createElement("select");
+            editHour.className = "text-xs font-semibold bg-transparent focus:outline-none";
+            const editExtra = document.createElement("span");
+            editExtra.className = "hidden inline-flex items-center gap-1";
+            const colonSpan = document.createElement("span");
+            colonSpan.className = "text-xs font-bold opacity-50";
+            colonSpan.textContent = ":";
+            const editMin = document.createElement("select");
+            editMin.className = "text-xs font-semibold bg-transparent focus:outline-none";
+            const editAmpmBtn = document.createElement("button");
+            editAmpmBtn.type = "button";
+            editAmpmBtn.className = "ml-0.5 px-1.5 py-0.5 rounded text-[11px] font-bold bg-indigo-600 text-white hover:bg-indigo-700";
+
+            editExtra.appendChild(colonSpan);
+            editExtra.appendChild(editMin);
+            editExtra.appendChild(editAmpmBtn);
+            populateTimeControls(editHour, editMin, task.time || "", editAmpmBtn, editExtra);
+            editTimeGroup.appendChild(editHour);
+            editTimeGroup.appendChild(editExtra);
 
             const editCatSelect = document.createElement("select");
             editCatSelect.className =
               mode === "black"
-                ? "px-2 py-1.5 text-xs font-medium rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-100"
-                : "px-2 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-slate-50 text-slate-700";
-            CATEGORY_LIST.forEach((cat) => {
+                ? "px-2 py-1.5 text-xs font-semibold rounded-lg border border-zinc-700 bg-zinc-900 text-zinc-100"
+                : mode === "eyecare"
+                  ? "px-2 py-1.5 text-xs font-semibold rounded-lg border border-[#dfd1b4] bg-[#f3ead8] text-[#3d3528]"
+                  : "px-2 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-slate-50 text-slate-700";
+            getAllCategories().forEach((cat) => {
               const opt = document.createElement("option");
               opt.value = cat.name;
               opt.textContent = cat.name;
@@ -908,33 +2008,52 @@
               editCatSelect.appendChild(opt);
             });
 
+            leftPickers.appendChild(editTimeGroup);
+            leftPickers.appendChild(editCatSelect);
+
+            const rightBtns = document.createElement("div");
+            rightBtns.className = "flex items-center gap-1.5";
+
             const saveBtn = document.createElement("button");
             saveBtn.type = "submit";
-            saveBtn.className = "px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shrink-0";
+            saveBtn.className = "px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold";
             saveBtn.textContent = "Save";
 
             const cancelBtn = document.createElement("button");
             cancelBtn.type = "button";
             cancelBtn.className =
               mode === "black"
-                ? "px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium shrink-0"
-                : "px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium shrink-0";
+                ? "px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium"
+                : "px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium";
             cancelBtn.textContent = "Cancel";
+
+            const commitEdit = () => {
+              const updatedName = editTextarea.value.trim();
+              if (updatedName) task.name = updatedName;
+              if (getCategoryMap()[editCatSelect.value]) task.category = editCatSelect.value;
+              const newTime = partsTo24h(editHour.value, editMin.value, editAmpmBtn.textContent);
+              if (task.time !== newTime) {
+                task.time = newTime;
+                task.notifiedDate = "";
+              }
+              editingId = null;
+              syncTodayHistory();
+              saveState();
+              render();
+            };
 
             editForm.addEventListener("submit", (e) => {
               e.preventDefault();
-              const updatedName = editInput.value.trim();
-              if (updatedName) task.name = updatedName;
-              if (CATEGORY_MAP[editCatSelect.value]) task.category = editCatSelect.value;
-              editingId = null;
-              saveState();
-              render();
+              commitEdit();
             });
 
-            editInput.addEventListener("keydown", (e) => {
+            editTextarea.addEventListener("keydown", (e) => {
               if (e.key === "Escape") {
                 editingId = null;
                 render();
+              } else if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                commitEdit();
               }
             });
 
@@ -943,21 +2062,23 @@
               render();
             });
 
-            editForm.appendChild(editInput);
-            editForm.appendChild(editCatSelect);
-            editForm.appendChild(saveBtn);
-            editForm.appendChild(cancelBtn);
+            rightBtns.appendChild(saveBtn);
+            rightBtns.appendChild(cancelBtn);
+            editControlsRow.appendChild(leftPickers);
+            editControlsRow.appendChild(rightBtns);
+
+            editForm.appendChild(editTextarea);
+            editForm.appendChild(editControlsRow);
             li.appendChild(editForm);
             taskListEl.appendChild(li);
 
             setTimeout(() => {
-              editInput.focus();
-              editInput.select();
+              editTextarea.focus();
+              editTextarea.setSelectionRange(editTextarea.value.length, editTextarea.value.length);
             }, 0);
             return;
           }
 
-          // Toggle checkbox + task title + category pill
           const toggleBtn = document.createElement("button");
           toggleBtn.type = "button";
           toggleBtn.className = "flex-1 flex items-center gap-3 p-1 text-left min-w-0";
@@ -977,30 +2098,45 @@
           const textWrap = document.createElement("div");
           textWrap.className = "min-w-0 flex-1";
 
-         const label = document.createElement("span");
-    label.className = task.done
-      ? mode === "black"
-        ? "block text-sm font-medium text-emerald-300/80 line-through break-words"
-        : "block text-sm font-medium text-emerald-900/75 line-through break-words"
-      : mode === "black"
-        ? "block text-sm font-semibold text-zinc-100 break-words"
-        : mode === "eyecare"
-          ? "block text-sm font-semibold text-[#2f281d] break-words"
-          : "block text-sm font-semibold text-slate-800 break-words";
-    label.textContent = task.name;
+          const label = document.createElement("span");
+          label.className = task.done
+            ? mode === "black"
+              ? "block text-sm font-medium text-emerald-300/80 line-through break-words"
+              : "block text-sm font-medium text-emerald-900/75 line-through break-words"
+            : mode === "black"
+              ? "block text-sm font-semibold text-zinc-100 break-words"
+              : mode === "eyecare"
+                ? "block text-sm font-semibold text-[#2f281d] break-words"
+                : "block text-sm font-semibold text-slate-800 break-words";
+          label.textContent = task.name;
+
+          const metaRow = document.createElement("div");
+          metaRow.className = "flex flex-wrap items-center gap-1.5 mt-1";
 
           const catBadge = document.createElement("span");
-          catBadge.className = `inline-block mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border ${catMeta.badge}`;
+          catBadge.className = `inline-block text-[11px] font-semibold px-2 py-0.5 rounded-md border ${catMeta.badge}`;
           catBadge.textContent = task.category;
+          metaRow.appendChild(catBadge);
+
+          if (task.time) {
+            const timeBadge = document.createElement("span");
+            timeBadge.className =
+              mode === "black"
+                ? "inline-block text-[11px] font-bold px-2 py-0.5 rounded-md bg-violet-950/60 text-violet-200 border border-violet-500/40"
+                : mode === "eyecare"
+                  ? "inline-block text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#f3ead8] text-[#3d3528] border border-[#c8b288]"
+                  : "inline-block text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200";
+            timeBadge.textContent = formatTime12h(task.time);
+            metaRow.appendChild(timeBadge);
+          }
 
           textWrap.appendChild(label);
-          textWrap.appendChild(catBadge);
+          textWrap.appendChild(metaRow);
           toggleBtn.appendChild(checkCircle);
           toggleBtn.appendChild(textWrap);
 
           toggleBtn.addEventListener("click", () => completeTaskById(task.id));
 
-          // Action Controls
           const actions = document.createElement("div");
           actions.className = "flex items-center gap-0.5 shrink-0";
           const actionBtnClass =
@@ -1059,6 +2195,7 @@
             }
             tasks = tasks.filter((t) => t.id !== task.id);
             updateStreakIfAllDone();
+            syncTodayHistory();
             saveState();
             render();
           });
@@ -1074,7 +2211,6 @@
         });
       }
 
-      // Dynamic progress & remaining count
       const completedCount = tasks.filter((t) => t.done).length;
       const totalCount = tasks.length;
       const remainingCount = totalCount - completedCount;
@@ -1108,9 +2244,192 @@
       justCheckedId = null;
     }
 
-    // 4. Pick For Me (Sequential) & Focus Timer Controls
+    // 4. Page Navigation & Settings Controls
+    historyToggleBtn.addEventListener("click", () => {
+      selectedHistoryKey = getDateKey();
+      currentPage = "history";
+      render();
+    });
+    historyBackBtn.addEventListener("click", () => {
+      currentPage = "home";
+      render();
+    });
+
+    settingsToggleBtn.addEventListener("click", () => {
+      currentPage = "settings";
+      resetConfirmWrap.classList.add("hidden");
+      render();
+    });
+    settingsBackBtn.addEventListener("click", () => {
+      currentPage = "home";
+      resetConfirmWrap.classList.add("hidden");
+      render();
+    });
+
+    customTimerUnitBtn.addEventListener("click", () => {
+      customTimerUnit = customTimerUnit === "sec" ? "min" : "sec";
+      renderSettingsPage();
+    });
+
+    customTimerMinus.addEventListener("click", () => {
+      const step = customTimerUnit === "sec" ? 5 : 1;
+      const minVal = customTimerUnit === "sec" ? 5 : 1;
+      const cur = parseInt(customTimerInput.value, 10) || (customTimerUnit === "sec" ? 30 : 10);
+      customTimerInput.value = String(Math.max(minVal, cur - step));
+    });
+    customTimerPlus.addEventListener("click", () => {
+      const step = customTimerUnit === "sec" ? 5 : 1;
+      const maxVal = customTimerUnit === "sec" ? 3600 : 180;
+      const cur = parseInt(customTimerInput.value, 10) || (customTimerUnit === "sec" ? 25 : 9);
+      customTimerInput.value = String(Math.min(maxVal, cur + step));
+    });
+
+    customTimerSaveBtn.addEventListener("click", () => {
+      const raw = parseInt(customTimerInput.value, 10);
+      if (!Number.isFinite(raw) || raw < 1) return;
+      const secs = customTimerUnit === "sec" ? Math.max(5, Math.min(3600, raw)) : Math.max(60, Math.min(10800, raw * 60));
+
+      if (!PRESET_SECONDS.includes(secs) && !customTimers.includes(secs)) {
+        customTimers.push(secs);
+      }
+      focusDurationSeconds = secs;
+      customTimerInput.value = "";
+      resetFocusTimer();
+      saveState();
+      render();
+    });
+
+    soundToggleBtn.addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      if (soundEnabled) playTimerChime();
+      saveState();
+      render();
+    });
+
+    confettiToggleBtn.addEventListener("click", () => {
+      confettiEnabled = !confettiEnabled;
+      saveState();
+      render();
+    });
+
+    autonextToggleBtn.addEventListener("click", () => {
+      autoAdvanceEnabled = !autoAdvanceEnabled;
+      saveState();
+      render();
+    });
+
+    settingsAddCatBtn.addEventListener("click", () => {
+      const added = addCustomCategory(settingsCatInput.value);
+      if (added) {
+        settingsCatInput.value = "";
+        populateCategorySelect(added);
+        render();
+      }
+    });
+
+    exportDataBtn.addEventListener("click", () => {
+      const payload = JSON.stringify({ tasks, customCategories, customTimers, history, streak, exportedAt: new Date().toISOString() }, null, 2);
+      const blob = new Blob([payload], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `tasks-${getDateKey()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    resetAllBtn.addEventListener("click", () => {
+      resetConfirmWrap.classList.remove("hidden");
+    });
+    resetConfirmNo.addEventListener("click", () => {
+      resetConfirmWrap.classList.add("hidden");
+    });
+    resetConfirmYes.addEventListener("click", () => {
+      tasks = DEFAULT_TASKS.map((t) => ({ ...t }));
+      customCategories = [];
+      customTimers = [30, 20, 10];
+      history = {};
+      nextId = 4;
+      streak = 0;
+      lastCompletedDate = "";
+      lastActiveDate = getDateKey();
+      activeFilter = "All";
+      focusDurationSeconds = 600;
+      syncTodayHistory();
+      resetFocusTimer();
+      resetConfirmWrap.classList.add("hidden");
+      populateCategorySelect("Work");
+      saveState();
+      currentPage = "home";
+      render();
+    });
+
+    categorySelect.addEventListener("change", () => {
+      if (categorySelect.value === "__custom__") {
+        inlineCustomCat.classList.remove("hidden");
+        inlineCustomCatInput.value = "";
+        inlineCustomCatInput.focus();
+      } else {
+        inlineCustomCat.classList.add("hidden");
+      }
+    });
+
+    inlineCustomCatSave.addEventListener("click", () => {
+      const added = addCustomCategory(inlineCustomCatInput.value);
+      inlineCustomCat.classList.add("hidden");
+      populateCategorySelect(added || "Work");
+      render();
+    });
+
+    inlineCustomCatCancel.addEventListener("click", () => {
+      inlineCustomCat.classList.add("hidden");
+      populateCategorySelect("Work");
+    });
+
+    notifyToggleBtn.addEventListener("click", async () => {
+      if (notificationsEnabled) {
+        notificationsEnabled = false;
+        saveState();
+        render();
+        return;
+      }
+      if (!("Notification" in window)) {
+        notificationsEnabled = true;
+        messageTextEl.textContent = "In app reminders enabled (your browser doesn't support system notifications).";
+        saveState();
+        render();
+        return;
+      }
+      if (Notification.permission === "granted") {
+        notificationsEnabled = true;
+        saveState();
+        render();
+        checkScheduledNotifications();
+        return;
+      }
+      try {
+        const permission = await Notification.requestPermission();
+        notificationsEnabled = true;
+        if (permission !== "granted") {
+          messageTextEl.textContent = "In app reminders enabled for your scheduled task times.";
+        }
+      } catch {
+        notificationsEnabled = true;
+      }
+      saveState();
+      render();
+      checkScheduledNotifications();
+    });
+
+    // 5. Focus Mode & Timer Controls
     pickForMeBtn.addEventListener("click", () => pickNextInSequence(false));
     spotlightNextBtn.addEventListener("click", () => pickNextInSequence(true));
+    refreshIdeasBtn.addEventListener("click", () => {
+      ideasPage += 1;
+      renderSpotlight();
+    });
     spotlightCloseBtn.addEventListener("click", () => {
       spotlightOpen = false;
       spotlightId = null;
@@ -1128,33 +2447,38 @@
         stopFocusTimer();
         return;
       }
-      if (timerSeconds <= 0) timerSeconds = 600;
-      focusTimerToggleBtn.textContent = "Pause";
+      if (timerSeconds <= 0) timerSeconds = focusDurationSeconds;
       timerInterval = setInterval(() => {
         timerSeconds -= 1;
-        focusTimerDisplayEl.textContent = formatTimer(Math.max(0, timerSeconds));
         if (timerSeconds <= 0) {
+          timerSeconds = 0;
           stopFocusTimer();
-          focusTimerToggleBtn.textContent = "Done!";
+          playTimerChime();
           miniBurst();
+        } else {
+          updateTimerUI();
         }
       }, 1000);
+      updateTimerUI();
     });
 
     focusTimerResetBtn.addEventListener("click", resetFocusTimer);
 
-    // 5. Add Task
+    // 6. Add Task
     addTaskForm.addEventListener("submit", (event) => {
       event.preventDefault();
       const name = taskInput.value.trim();
       if (!name) return;
 
-      const selectedCategory = categorySelect.value;
+      const selectedCategory = categorySelect.value === "__custom__" ? "Personal" : categorySelect.value;
+      const newTime = partsTo24h(addHourSelect.value, addMinSelect.value, addAmpmBtn.textContent);
       tasks.push({
         id: nextId++,
         name,
-        category: CATEGORY_MAP[selectedCategory] ? selectedCategory : "Personal",
-        done: false
+        category: getCategoryMap()[selectedCategory] ? selectedCategory : "Personal",
+        time: newTime,
+        done: false,
+        notifiedDate: ""
       });
 
       if (activeFilter !== "All" && activeFilter !== selectedCategory) {
@@ -1162,12 +2486,15 @@
       }
 
       taskInput.value = "";
+      syncPlaceholderVisibility();
+      populateTimeControls(addHourSelect, addMinSelect, "", addAmpmBtn, addTimeExtra);
       taskInput.focus();
+      syncTodayHistory();
       saveState();
       render();
     });
 
-    // 6. Clear completed tasks
+    // 7. Clear completed tasks
     clearCompletedBtn.addEventListener("click", () => {
       tasks = tasks.filter((t) => !t.done);
       editingId = null;
@@ -1175,25 +2502,35 @@
         spotlightId = null;
         resetFocusTimer();
       }
+      syncTodayHistory();
       saveState();
       render();
     });
 
-    // 7. Reset day checkmarks
+    // 8. Reset day checkmarks
     resetBtn.addEventListener("click", () => {
       tasks.forEach((t) => {
         t.done = false;
+        t.notifiedDate = "";
       });
       editingId = null;
       spotlightId = null;
       resetFocusTimer();
       messageTextEl.textContent = "Fresh start! Check off a task whenever you're ready.";
+      syncTodayHistory();
       saveState();
       render();
     });
 
+    setInterval(() => {
+      updateDynamicClock();
+      checkScheduledNotifications();
+    }, 30000);
+
     // Initial render
     render();
+    syncPlaceholderVisibility();
+    checkScheduledNotifications();
     // Register PWA service worker for offline support
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
